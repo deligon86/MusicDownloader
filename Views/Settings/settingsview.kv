@@ -1,0 +1,68 @@
+<SettingsView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+
+        MDScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 10
+
+                AutoCustomThemeCard:
+                    is_button_widget: True
+                    size_hint_y: None
+                    height: "250dp"
+                    radius: 8
+                    orientation: "vertical"
+                    CommonLabel:
+                        size_hint_y: None
+                        height: '48dp'
+                        text: "Theme and Font Options"
+
+                    MDBoxLayout:
+                        # themes
+                        orientation: "vertical"
+                        CommonLabel:
+                            size_hint_y: None
+                            height: '48dp'
+                            text: "Theme"
+                            sub_header: True
+                        MDBoxLayout:
+                            spacing: 10
+                            ThemeButton:
+                                theme: "Light"
+                            ThemeButton:
+                                theme: "Dark"
+                            ThemeButton:
+                                theme: "Black"
+
+                    MDBoxLayout:
+                        # accent color
+                        MDScrollView:
+                            MDBoxLayout:
+                                size_hint_x: None
+                                width: self.minimum_width
+                                id: accent_cont
+
+                    MDBoxLayout:
+                        # fonts
+                        orientation: "vertical"
+                        CommonLabel:
+                            size_hint_y: None
+                            height: '48dp'
+                            sub_header: True
+                            text: "Font options"
+                        MDBoxLayout:
+
+
+                AutoCustomThemeCard:
+                    is_button_widget: True
+                    size_hint_y: None
+                    height: "250dp"
+
+                AutoCustomThemeCard:
+                    is_button_widget: True
+                    size_hint_y: None
+                    height: "250dp"
+

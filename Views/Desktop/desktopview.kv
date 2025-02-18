@@ -1,0 +1,50 @@
+<DesktopView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        padding: 10
+        spacing: 5
+        MDBoxLayout:
+            orientation: "vertical"
+            spacing: 2
+            AutoCustomThemeCard:
+                size_hint_y: None
+                height: '52dp'
+                is_button_widget: True
+                radius: 10
+                MDAnchorLayout:
+                    anchor_x: "left"
+                    MDBoxLayout:
+                        #radius: [20,]
+                        padding: 2
+                        #md_bg_color: [0, 0, 0, 1] if app.theme_cls.theme_style == "Dark" else [.95, .95, .95, 1]
+                        MyNavigationBar:
+                            # nav content
+                            view: root
+                            NavigationButton:
+                                icon: "home"
+                                text: "Songs"
+
+                            NavigationButton:
+                                icon: "magnify"
+                                text: "Search"
+
+                            NavigationButton:
+                                icon: "youtube"
+                                text: "YouTube"
+
+                            NavigationButton:
+                                icon: "chart-donut-variant"
+                                text: "Billboard"
+
+                            NavigationButton:
+                                icon: "download"
+                                text: "Downloads"
+
+            MDBoxLayout:
+                id: layout
+
+        AutoCustomThemeCard:
+            is_button_widget: True
+            size_hint_x: .4
+            id: side_bar_layout
+            radius: 10

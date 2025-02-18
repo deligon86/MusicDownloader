@@ -1,0 +1,53 @@
+<DownloadView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        padding: 10
+        orientation: "vertical"
+
+        MDBoxLayout:
+            # top widgets
+            size_hint_y: None
+            height: "52dp"
+
+            MDAnchorLayout:
+                anchor_x: "left"
+                CommonLabel:
+                    is_header: True
+
+            MDAnchorLayout:
+                anchor_x: "right"
+                size_hint_x: .4
+                MDBoxLayout:
+                    spacing: 5
+                    AutoCustomThemeCard:
+                        is_button_widget: True
+                        ripple_behavior: True
+                        radius: 10
+                        MDFloatLayout:
+                            size_hint_x: .4
+                            MDIcon:
+                                icon: "trash-can"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                        CommonLabel:
+                            text: "Clear all"
+
+                    AutoCustomThemeCard:
+                        is_button_widget: True
+                        ripple_behavior: True
+                        radius: 10
+                        MDFloatLayout:
+                            size_hint_x: .4
+                            MDIcon:
+                                icon: "arrow-top-right-bold-box"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                        CommonLabel:
+                            text: "Folder"
+
+        MDBoxLayout:
+            MDScrollView:
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+                    id: content
+                    spacing: 5

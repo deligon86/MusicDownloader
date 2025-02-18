@@ -1,0 +1,25 @@
+<YouTubeView>:
+
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+        padding: 10
+
+        # Search bar
+        MDFloatLayout:
+            size_hint: .8, None
+            height: '42dp'
+            CommonTextField:
+                hint_text: "Search"
+                icon_left: "magnify"
+                pos_hint: {"center_x": .5, "center_y": .5}
+
+        # Content
+        MDBoxLayout:
+            MDScrollView:
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 5
+                    orientation: "vertical"
+                    id: content

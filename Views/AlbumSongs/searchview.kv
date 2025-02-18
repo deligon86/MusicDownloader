@@ -1,0 +1,41 @@
+<SearchView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+        padding: 10
+        MDBoxLayout:
+            size_hint_y: None
+            height: "42dp"
+            padding: 10
+            spacing: 10
+
+            MDAnchorLayout:
+                anchor_x: "left"
+                CommonTextField:
+                    hint_text: "Search"
+
+            MDAnchorLayout:
+                anchor_x: "right"
+                size_hint_x: .35
+                MDBoxLayout:
+                    spacing: 2
+                    CommonLabel:
+                        text: "Mode: "
+                        id: mode_text
+                    CommonIconButton:
+                        icon2: 'chevron-up'
+                        icon: 'chevron-down'
+                        is_chevron: True
+                        id: mode
+                        on_release: root.open_search_mode_menu(self)
+                        pos_hint: {"center_x": .5, "center_y": .5}
+
+        # Content
+        MDBoxLayout:
+            MDScrollView:
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 5
+                    orientation: "vertical"
+                    id: content

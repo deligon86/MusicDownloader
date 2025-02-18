@@ -1,0 +1,49 @@
+#: import fade kivy.uix.screenmanager.FadeTransition
+<SongsView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+        padding: 10
+        MDBoxLayout:
+            size_hint_y: None
+            height: '42dp'
+            padding: 10
+            MDAnchorLayout:
+                anchor_x: "left"
+                CommonLabel:
+                    is_header: True
+                    id: title
+                    text: "Songs"
+
+            MDAnchorLayout:
+                anchor_x: "right"
+                size_hint_x: .3
+                MDBoxLayout:
+                    spacing: 5
+                    CommonLabel:
+                        text: "View: "
+                        halign: "right"
+                    CommonIconButton:
+                        icon: "cogs"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+
+        MDScreenManager:
+            id: manager
+            transition: fade()
+            MDScreen:
+                name: 'albums'
+                MDScrollView:
+                    AutoColumnGrid:
+                        id: albums
+
+            MDScreen:
+                name: "foreign"
+                MDScrollView:
+                    AutoColumnGrid:
+                        id: foreign
+
+            MDScreen:
+                name: "songs"
+                MDScrollView:
+                    AutoColumnGrid:
+                        id: songs

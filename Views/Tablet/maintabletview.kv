@@ -1,0 +1,83 @@
+<TabletView>:
+    md_bg_color: [.9, .5, .2, 1]
+    AutoCustomThemeCard:
+        is_parent_widget: True
+
+        MDFloatLayout:
+            id: t_layout
+
+            MDBoxLayout:
+                # left
+                orientation: "vertical"
+                spacing: 5
+                padding: [5,]
+                pos_hint: {"center_x": .5, "center_y": .5}
+                AutoCustomThemeCard:
+                    size_hint_y: None
+                    height: "42dp"
+                    # top bar
+                    spacing: 20
+                    radius: 10
+                    padding: [10, 0, 0, 0]
+                    is_button_widget: True
+                    elevation: 1
+                    shadow_softness: 8
+
+                    MDBoxLayout:
+                        size_hint_x: .1
+                        CommonIconButton:
+                            id: menu
+                            icon: "menu"
+                            size_hint: None, None
+                            width: 38
+                            height: 38
+                            pos_hint: {"center_x": .5, "center_y": .5}
+                            on_release: root.open_menu(self)
+
+                    MDAnchorLayout:
+                        anchor_x: "left"
+                        MDBoxLayout:
+                            #radius: [20,]
+                            padding: 2
+                            #md_bg_color: [0, 0, 0, 1] if app.theme_cls.theme_style == "Dark" else [.95, .95, .95, 1]
+                            MyNavigationBar:
+                                # nav content
+                                view: root
+                                NavigationButton:
+                                    icon: "home"
+                                    text: "Songs"
+
+                                NavigationButton:
+                                    icon: "magnify"
+                                    text: "Search"
+
+                                NavigationButton:
+                                    icon: "youtube"
+                                    text: "YouTube"
+
+                                NavigationButton:
+                                    icon: "chart-donut-variant"
+                                    text: "Billboard"
+
+                    MDAnchorLayout:
+                        anchor_x: "right"
+                        size_hint_x: .2
+                        MDBoxLayout:
+                            spacing: 10
+                            CommonIconButton:
+                                icon: "cog-outline"
+                                size_hint: None, None
+                                width: 38
+                                height: 38
+                                pos_hint: {"center_x": .5, "center_y": .5}
+
+                            CommonIconButton:
+                                icon: "bell-outline"
+                                size_hint: None, None
+                                width: 38
+                                height: 38
+                                pos_hint: {"center_x": .5, "center_y": .5}
+
+
+                MDBoxLayout:
+                    id: layout

@@ -1,0 +1,223 @@
+<CommonTextField>:
+    app: app
+
+<CommonLabel>:
+    app: app
+
+
+<CommonIconButton>:
+    radius: [40,]
+    size_hint: None, None
+    width: 40
+    height: 40
+    ripple_behavior: True
+    MDFloatLayout:
+        MDIcon:
+            id: icon
+            icon: root.icon
+            font_size: "26sp"
+            pos_hint: {"center_x": .5, "center_y": .5}
+
+
+<CommonYoutubeItem>:
+    size_hint_y: None
+    height: "180dp"
+    inherit_color: True
+
+    MDFloatLayout:
+        # image
+        size_hint_x: .5
+        padding: 5
+        MDBoxLayout:
+            radius: 10
+            padding: 5
+            pos_hint: {"center_x": .5, "center_y": .5}
+            AsyncImage:
+                source: root.thumbnail
+
+        CommonLabel:
+            text: root.duration
+            pos_hint: {"center_x": .75, "center_y": .18}
+            size_hint: None, None
+            size: [70, 20]
+            halign: "center"
+            make_custom: True
+
+    MDBoxLayout:
+        # description
+        orientation: "vertical"
+        MDBoxLayout:
+            padding: [20, 0, 0, 0]
+            orientation: "vertical"
+            spacing: 5
+            CommonLabel:
+                sub_header: True
+                font_size: "20sp"
+                text: root.title
+                shorten: True
+                shorten_from: "right"
+            MDBoxLayout:
+                MDAnchorLayout:
+                    anchor_x: 'left'
+                    MDBoxLayout:
+                        spacing: 10
+                        CommonLabel:
+                            text: root.views
+                            shorten: True
+                            shorten_from: "right"
+                            halign: "right"
+                            size_hint_x: .8
+                            small: True
+                        MDIcon:
+                            icon: 'circle'
+                            font_size: '5sp'
+                            size_hint: None, None
+                            size: [10, 10]
+                            pos_hint: {"center_x": .5, "center_y": .5}
+
+                        CommonLabel:
+                            text: root.publish_date
+                            shorten: True
+                            shorten_from: "right"
+                            small: True
+                MDAnchorLayout:
+                    anchor_x: 'right'
+
+        MDBoxLayout:
+            #channel
+            size_hint_y: .4
+            MDFloatLayout:
+                size_hint: .15, .5
+                RoundedAsyncImage:
+                    size_hint: None, None
+                    size: [50, 50]
+                    AsyncImage:
+                        source: root.channel_image
+                        pos_hint: {"center_x": .5, "center_y": .5}
+
+            CommonLabel:
+                text: root.author
+                halign: "left"
+                small: True
+
+        MDBoxLayout:
+            padding: [20, 5, 20, 5]
+            ScrollableLabel:
+                text: root.description
+
+    MDFloatLayout:
+        size_hint_x: .3
+        CommonIconButton:
+            enable_custom: False
+            icon: "download-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            # on_release: app.prepare_youtube_download(root.link, root.title)
+
+
+<CommonYouTubeHttpResultItem>:
+    size_hint_y: None
+    height: 80
+    inherit_color: True
+    padding: 10
+    MDBoxLayout:
+        orientation: "vertical"
+        CommonLabel:
+            is_header: True
+            text: root.stream_title
+
+        CommonLabel:
+            text: f"Stream Type: {root.stream_type}  Stream Quality: {root.stream_quality}"
+
+    MDFloatLayout:
+        size_hint_x: .3
+        CommonIconButton:
+            enable_custom: False
+            icon: "download-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            #on_release: app.prepare_youtube_search_download_task(root.stream_title, root.stream_link, root.stream_format)
+
+
+<CommonSearchResult>:
+    size_hint_y: None
+    height: "150dp"
+    inherit_color: True
+
+    MDBoxLayout:
+        # image
+        size_hint_x: .3
+        padding: 5
+        AsyncImage:
+            source: root.image
+
+    MDBoxLayout:
+        # description
+        orientation: "vertical"
+        MDBoxLayout:
+            padding: [20, 0, 0, 0]
+            orientation: "vertical"
+            spacing: 5
+            CommonLabel:
+                text: root.title
+                shorten: True
+                shorten_from: "right"
+
+            CommonLabel:
+                text: root.description
+                shorten: True
+                shorten_from: "right"
+                theme_text_color: "Secondary"
+                small: True
+
+        MDBoxLayout:
+            # views
+            padding: [10, 0, 0, 0]
+            CommonLabel:
+                text: root.artist
+                font_size: "15sp"
+                small: True
+
+    MDFloatLayout:
+        size_hint_x: .3
+        CommonIconButton:
+            icon: "download-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+
+
+<NavigationButton>:
+    md_bg_color: root.parent.md_bg_color
+    radius: 20
+    is_button_widget: True
+    ripple_behavior: True
+    on_release:
+        root.parent.mark_widget(self, icon, lbl)
+
+    MDFloatLayout:
+        size_hint_x: .4
+        MDIcon:
+            id: icon
+            icon: root.icon
+            pos_hint: {"center_x": .5, "center_y": .5}
+            font_size: "24dp"
+
+    MDBoxLayout:
+        CommonLabel:
+            id: lbl
+            text: root.text
+            solid: True
+            halign: "left"
+
+<MyNavigationBar>:
+    app: app
+
+<ThemeButton>:
+
+    MDCheckbox:
+        group: 'theme'
+        on_active: root.set_value(*args)
+        size_hint: None, None
+        size: '48dp', '48dp'
+        pos_hint: {"center_x": .5, "center_y": .5}
+
+    CommonLabel:
+        text: root.theme
+        halign: "center"

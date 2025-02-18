@@ -1,0 +1,45 @@
+<BillboardView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: "42dp"
+            size_hint_x: .7
+            spacing: 20
+            padding: 8
+            MDBoxLayout:
+                size_hint_x: .5
+                CommonLabel:
+                    id: title
+                    text: "All"
+                    halign: "center"
+                CommonIconButton:
+                    icon: "chevron-down"
+                    icon2: "chevron-up"
+                    is_chevron: True
+                    id: category
+                    pos_hint: {"center_x":.5, "center_y": .5}
+                    on_release: root.open_category_menu(self)
+
+            MDBoxLayout:
+                size_hint_x: .25
+                AutoCustomThemeCard:
+                    id: america
+                    is_button_widget: True
+                    radius: 10
+                    ripple_behavior: True
+                    on_release: root.get_top_americas(self)
+                    CommonLabel:
+                        text: "Top America"
+                        halign: "center"
+
+        MDBoxLayout:
+            MDScrollView:
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 5
+                    id: content
+
