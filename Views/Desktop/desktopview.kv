@@ -2,7 +2,7 @@
     AutoCustomThemeCard:
         is_parent_widget: True
         padding: 10
-        spacing: 5
+        spacing: 10
         MDBoxLayout:
             orientation: "vertical"
             spacing: 2
@@ -23,6 +23,7 @@
                             NavigationButton:
                                 icon: "home"
                                 text: "Songs"
+                                radius: [10, 0, 0, 10]
 
                             NavigationButton:
                                 icon: "magnify"
@@ -39,6 +40,16 @@
                             NavigationButton:
                                 icon: "download"
                                 text: "Downloads"
+                                radius: 0
+
+                MDAnchorLayout:
+                    anchor_x: "right"
+                    size_hint_x: .2
+                    padding: 10
+                    CommonIconButton:
+                        icon: "cog-outline"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        on_release: root.receive_screen_request('settings')
 
             MDBoxLayout:
                 id: layout

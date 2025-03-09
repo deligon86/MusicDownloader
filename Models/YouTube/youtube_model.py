@@ -2,11 +2,10 @@ import re
 import time
 
 import requests
-from network import logger
+from Core import logger
 from youtubesearchpython import VideosSearch
 from pytubefix import YouTube, Search
 from Core.utils.utils import is_connected, is_valid_youtube_link
-from PyQt6.QtCore import QThread
 
 class YouTubeModel:
 
@@ -32,42 +31,30 @@ class YouTubeModel:
                         if type_ == 'url':
                             # print("*** ", text, " ***")
                             res = YouTube(url=text, use_oauth=True, allow_oauth_cache=True).streams.filter(only_audio=only_audio, only_video=video_only)
-                            '''while True:
-                                if res:
-                                    break
-                                QThread.sleep(100)'''
+
                             if res:
                                 self.cache[value] = [res, 'Single', "streams"]
 
                             return 'Single', "streams", res
                         else:
                             res = self.fast_api_search(value)
-                            '''while True:
-                                if res:
-                                    break
-                                QThread.sleep(100)'''
+
                             if res:
                                 self.cache[text] = [res, 'multi', "list_dict"]
-                            return "multi", "list_dict", res
+                            return "Multi", "list_dict", res
                     else:
                         if type_ == "url":
                             res = YouTube(url=text, use_oauth=True, allow_oauth_cache=True).streams.filter(only_audio=only_audio, only_video=video_only)
-                            '''while True:
-                                if res:
-                                    break
-                                QThread.sleep(100)'''
+
                             if res:
                                 self.cache[value] = [res, 'Single', "streams"]
                             return 'Single', "streams", res
                         else:
-                            res = self.slow_api_search(value)
-                            '''while True:
-                                if res:
-                                    break
-                                QThread.sleep(100)'''
+                            res = self.normal_api_search(value)
+
                             if res:
                                 self.cache[text] = [res, 'multi', "list"]
-                            return "multi", "list", res
+                            return "Multi", "list", res
 
                 except Exception as e:
                     return None, "Error", e
@@ -78,7 +65,7 @@ class YouTubeModel:
                 res, vid_object = self.fast_api_search(url)
                 my_result = res[0]
 
-                return my_result
+                return "Single", "dict", my_result
 
     def url_build(self, text):
         """Build the url"""
@@ -133,7 +120,7 @@ class YouTubeModel:
         return items
 
     @staticmethod
-    def parse_slow_api_results(results):
+    def parse_normal_api_results(results):
         """
         Parse the results to a dict for more readability
         """
@@ -143,7 +130,9 @@ class YouTubeModel:
 
             parsed.append(res)
 
-    def slow_api_search(self, build_url):
+        return parsed
+
+    def normal_api_search(self, build_url):
         """Slow and all in one search containing direct download links"""
         logger.info("[Search] Using slow, exclusive")
         yt = Search(build_url)

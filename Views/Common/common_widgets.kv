@@ -4,6 +4,22 @@
 <CommonLabel>:
     app: app
 
+<CommonIcon>:
+    app: app
+
+<ScrollableLabel>:
+    CommonLabel:
+        size_hint_y: None
+        height: self.texture_size[1]
+        text: root.text
+
+<RoundedAsyncImage>:
+
+    canvas.before:
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: root.radius
 
 <CommonIconButton>:
     radius: [40,]
@@ -15,13 +31,13 @@
         MDIcon:
             id: icon
             icon: root.icon
-            font_size: "26sp"
+            font_size: f"{root.icon_size}sp"
             pos_hint: {"center_x": .5, "center_y": .5}
-
 
 <CommonYoutubeItem>:
     size_hint_y: None
     height: "180dp"
+    radius: 5
     inherit_color: True
 
     MDFloatLayout:
@@ -88,17 +104,17 @@
             size_hint_y: .4
             MDFloatLayout:
                 size_hint: .15, .5
-                RoundedAsyncImage:
-                    size_hint: None, None
-                    size: [50, 50]
-                    AsyncImage:
-                        source: root.channel_image
-                        pos_hint: {"center_x": .5, "center_y": .5}
+                AsyncImage:
+                    source: root.channel_image
+                    #radius: [10, 10, 10, 10]
+                    pos_hint: {"center_x": .5, "center_y": .5}
 
             CommonLabel:
                 text: root.author
                 halign: "left"
+                valign: "center"
                 small: True
+                pos_hint: {"center_x": .5, "center_y": .5}
 
         MDBoxLayout:
             padding: [20, 5, 20, 5]
@@ -111,32 +127,32 @@
             enable_custom: False
             icon: "download-outline"
             pos_hint: {"center_x": .5, "center_y": .5}
-            # on_release: app.prepare_youtube_download(root.link, root.title)
-
+            on_release: root.initiate_download()
 
 <CommonYouTubeHttpResultItem>:
     size_hint_y: None
     height: 80
     inherit_color: True
     padding: 10
+    radius: 5
     MDBoxLayout:
         orientation: "vertical"
         CommonLabel:
-            is_header: True
-            text: root.stream_title
+            sub_header: True
+            text: root.title
 
         CommonLabel:
             text: f"Stream Type: {root.stream_type}  Stream Quality: {root.stream_quality}"
 
     MDFloatLayout:
-        size_hint_x: .3
+        size_hint_x: .2
         CommonIconButton:
             enable_custom: False
             icon: "download-outline"
             pos_hint: {"center_x": .5, "center_y": .5}
-            #on_release: app.prepare_youtube_search_download_task(root.stream_title, root.stream_link, root.stream_format)
+            on_release: root.initiate_download()
 
-
+# for SearchView search results
 <CommonSearchResult>:
     size_hint_y: None
     height: "150dp"
@@ -153,7 +169,7 @@
         # description
         orientation: "vertical"
         MDBoxLayout:
-            padding: [20, 0, 0, 0]
+            padding: [20, 0, 0, 5]
             orientation: "vertical"
             spacing: 5
             CommonLabel:
@@ -169,8 +185,8 @@
                 small: True
 
         MDBoxLayout:
-            # views
             padding: [10, 0, 0, 0]
+            size_hint_y: .2
             CommonLabel:
                 text: root.artist
                 font_size: "15sp"
@@ -181,11 +197,12 @@
         CommonIconButton:
             icon: "download-outline"
             pos_hint: {"center_x": .5, "center_y": .5}
+            on_release: root.initiate_download()
 
 
 <NavigationButton>:
     md_bg_color: root.parent.md_bg_color
-    radius: 20
+    radius: 0
     is_button_widget: True
     ripple_behavior: True
     on_release:
@@ -193,7 +210,7 @@
 
     MDFloatLayout:
         size_hint_x: .4
-        MDIcon:
+        CommonIcon:
             id: icon
             icon: root.icon
             pos_hint: {"center_x": .5, "center_y": .5}
@@ -209,11 +226,13 @@
 <MyNavigationBar>:
     app: app
 
+# Option view items
 <ThemeButton>:
-
+    app: app
     MDCheckbox:
+        id: check
         group: 'theme'
-        on_active: root.set_value(*args)
+        on_active: root.set_value(self, self.active)
         size_hint: None, None
         size: '48dp', '48dp'
         pos_hint: {"center_x": .5, "center_y": .5}
@@ -221,3 +240,84 @@
     CommonLabel:
         text: root.theme
         halign: "center"
+
+<SwitchOptionItem>:
+    app: app
+    padding: 10
+    CommonLabel:
+        text: root.text
+        size_hint_x: .7
+    MDBoxLayout:
+        adaptive_width: True
+        MDSwitch:
+            on_active: root.set_value(*args)
+            pos_hint: {"center_x": .5, "center_y": .5}
+
+
+<AccentColorButton>:
+    app: app
+    size_hint: None, None
+    size: "60dp", "60dp"
+    radius: self.width
+
+# Song view items
+<SongViewCardItem>:
+    orientation: "vertical"
+    padding: 5
+    spacing: 2
+    radius: 8
+    size_hint: None, None
+    MDBoxLayout:
+        AsyncImage:
+            source: root.image
+    MDBoxLayout:
+        size_hint_y: .3
+        spacing: 4
+        orientation: "vertical"
+        radius: [0, 0, 5, 5]
+        CommonLabel:
+            text: root.title
+            shorten: True
+            small: True
+        CommonLabel:
+            text: root.artist
+            default_theme_text_color: "Secondary"
+            theme_text_color: "Secondary"
+            small: True
+
+# trending items
+<TrendingSongViewItem>:
+    size_hint_y: None
+    height: "60dp"
+    spacing: 10
+    MDBoxLayout:
+        size_hint_x: None
+        width: root.height
+        AsyncImage:
+            source: root.art
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: 4
+        CommonLabel:
+            text: root.song_name
+        CommonLabel:
+            text: root.artist
+            small: True
+
+<TrendingArtistViewItem>:
+    size_hint_y: None
+    height: "60dp"
+    spacing: 10
+    MDBoxLayout:
+        id: num_cont
+        size_hint_x: 0.001
+    MDBoxLayout:
+        size_hint_x: None
+        width: root.height
+        AsyncImage:
+            source: root.image
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: 4
+        CommonLabel:
+            text: root.artist

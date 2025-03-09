@@ -13,6 +13,7 @@
                 anchor_x: "left"
                 CommonTextField:
                     hint_text: "Search"
+                    on_text_validate: root.search(self.text)
 
             MDAnchorLayout:
                 anchor_x: "right"
@@ -31,11 +32,18 @@
                         pos_hint: {"center_x": .5, "center_y": .5}
 
         # Content
-        MDBoxLayout:
+        MDFloatLayout:
             MDScrollView:
+                pos_hint: {"center_x": .5, "center_y": .5}
                 MDBoxLayout:
                     size_hint_y: None
                     height: self.minimum_height
                     spacing: 5
                     orientation: "vertical"
                     id: content
+
+            MDSpinner:
+                id: spinner
+                pos_hint: {"center_x": .5, "center_y": .65}
+                size_hint: .1, .1
+                active: False

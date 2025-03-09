@@ -40,11 +40,10 @@ class TabletView(BaseView):
                 if self.side_bar_open:
                     self.side_bar_open = False
                 else:
-                    self.side_bar_open = open
-            elif text == "Discover":
-                pass
+                    self.side_bar_open = True
+
             elif text == "Downloads page":
-                pass
+                self.requested_screen = "downloads"
 
         self.menu.dismiss()
 
@@ -58,10 +57,11 @@ class TabletView(BaseView):
 
         self.main_view.change_screen(screen_view)
 
-    def _on_side_bar(self, instance, value):
-        if value:
-            self.main_view.mini_manager_parent = self.ids.t_layout
+    def _on_side_bar(self, instance, open):
+        if open:
+            # open the side content
+            self.main_view.force_mini_manager(self.ids.t_layout)
         else:
+            # remove the side content
             if self.main_view:
                 self.main_view.detach_mini_manager()
-

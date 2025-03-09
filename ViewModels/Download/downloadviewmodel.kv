@@ -1,0 +1,45 @@
+<DownloadViewModel>:
+    size_hint_y: None
+    height: '100dp'
+    padding: 5
+    radius: 10
+    MDFloatLayout:
+        size_hint_x: None
+        width: root.height
+        CommonIcon:
+            id: icon
+            icon: root.icon
+            font_size: "42sp"
+            pos_hint: {"center_x": .5, "center_y": .5}
+
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: 2
+        MDBoxLayout:
+            id: title_cont
+            CommonLabel:
+                id: title
+
+        MDBoxLayout:
+            id: progress_cont_parent
+            size_hint_y: .001
+            md_bg_color: [.4, .6, .7, 1]
+
+        MDBoxLayout:
+            #
+            id: btns
+            size_hint_y: .4
+
+
+<ProgressContainer>:
+    MDProgressbar:
+        id: progressbar
+        value: 10
+        pos_hint: {"center_x": .5, "center_y": .5}
+
+
+<DownloadViewModelButton>:
+    size_hint_x: .5
+    CommonLabel:
+        halign: "left"
+        id: label

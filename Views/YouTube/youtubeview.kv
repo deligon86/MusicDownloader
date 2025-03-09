@@ -3,12 +3,14 @@
     AutoCustomThemeCard:
         is_parent_widget: True
         orientation: "vertical"
-        padding: 10
+        padding: 2
+        spacing: 5
 
         # Search bar
-        MDFloatLayout:
+        MDBoxLayout:
             size_hint: .8, None
             height: '42dp'
+            padding: 8
             CommonTextField:
                 hint_text: "Search"
                 icon_left: "magnify"
@@ -16,6 +18,7 @@
 
         # Content
         MDBoxLayout:
+            padding: 8
             MDScrollView:
                 MDBoxLayout:
                     size_hint_y: None
@@ -23,3 +26,15 @@
                     spacing: 5
                     orientation: "vertical"
                     id: content
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: 4
+            padding: 2
+            MDProgressBar:
+                id: progress
+                value: 20
+                opacity: 0
+                radius: 3
+                color: app.theme_color
+                type: "determinate"

@@ -1,6 +1,10 @@
+from kivy.metrics import dp
 from kivy.properties import StringProperty
 from kivymd.uix.menu import MDDropdownMenu
+from kivymd.utils import asynckivy
 
+from Views.Common.common_layouts import AutoColumnGrid
+from Views.Common.common_widgets import SongViewCardItem
 from Views.baseview import BaseNormalScreenView
 from ViewModels.AlbumSongs.album_viewmodel import AlbumViewModel
 
@@ -34,12 +38,21 @@ class SongsView(BaseNormalScreenView):
         )
         self.mode_menu.position = "bottom"
 
+    def on_start(self):
+        """
+        When the app starts should call this to populate the view
+        :return:
+        """
+        self.navigate(self.ids.pager_s, "previous")
+
     def open_mode_menu(self, caller):
         """
         Open menu to choose mode
         :param caller:
         :return:
         """
+        self.mode_menu.caller = caller
+        self.mode_menu.open()
 
     def mode_menu_callback(self, mode):
         """
@@ -47,11 +60,15 @@ class SongsView(BaseNormalScreenView):
         :return:
         """
         self.mode = mode
-        self._view_model.navigate_mode = mode
+        self.mode_menu.dismiss()
 
-    def navigate_songs(self, direction="forward"):
+    def change_view(self, view_name):
+        self.ids.manager.current = view_name.lower()
+
+    def navigate(self, pager, direction="forward"):
         """
         Navigate song pages
+        :param pager: CommonLabel
         :param direction:
         :return:
         """
@@ -61,8 +78,32 @@ class SongsView(BaseNormalScreenView):
         else:
             if self.current_page > 1:
                 self.current_page -= 1
-
+            else:
+                self.current_page = 1
+        pager.text = f"Page {self.current_page}"
         self._view_model.navigate_songs(self.current_page)
+
+    def populate_view(self, view: AutoColumnGrid, results:dict|None):
+        """
+        :param results:
+        :param view: Grid
+        :return:
+        """
+
+        async def start_widget_loading(view_, results_):
+            if results_:
+                view.clear_widgets()
+                for title_artist, data in results.items():
+                    title, artist = title_artist.split("?")
+                    item = SongViewCardItem(
+                        title=title, artist=artist,
+                        image=data[-1], url=data[0],
+                        width=view_.standard_child_width,
+                        height=view_.standard_child_width + dp(20)
+                    )
+                    view_.add_widget(item)
+
+        asynckivy.start(start_widget_loading(view, results))
 
     def _on_navigate_results(self, instance, results):
         """
@@ -73,11 +114,11 @@ class SongsView(BaseNormalScreenView):
         """
         match self.mode:
             case "Albums":
-                pass
+                self.populate_view(self.ids.albums, results)
             case "Foreign":
-                pass
+                self.populate_view(self.ids.foreign, results)
             case "Songs":
-                pass
+                self.populate_view(self.ids.songs, results)
 
     def _on_base_results(self, instance, results):
         """
@@ -88,11 +129,11 @@ class SongsView(BaseNormalScreenView):
         """
         match self.mode:
             case "Albums":
-                pass
+                self.populate_view(self.ids.albums, results)
             case "Foreign":
-                pass
+                self.populate_view(self.ids.foreign, results)
             case "Songs":
-                pass
+                self.populate_view(self.ids.songs, results)
 
     def _on_mode(self, instance, value):
         """
@@ -101,5 +142,6 @@ class SongsView(BaseNormalScreenView):
         :param value:
         :return:
         """
-        self.ids.title.text = self.mode
-        self.ids.manager.current = self.mode.lower()
+        self.ids.title.text = value.capitalize()
+        self._view_model.navigate_mode = value
+        self.change_view(value)

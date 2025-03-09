@@ -7,18 +7,20 @@
                 orientation: "vertical"
                 size_hint_y: None
                 height: self.minimum_height
-                spacing: 10
+                spacing: 8
 
                 AutoCustomThemeCard:
                     is_button_widget: True
                     size_hint_y: None
-                    height: "250dp"
+                    height: "350dp"
                     radius: 8
+                    padding: 10
                     orientation: "vertical"
                     CommonLabel:
                         size_hint_y: None
                         height: '48dp'
                         text: "Theme and Font Options"
+                        is_header: True
 
                     MDBoxLayout:
                         # themes
@@ -30,6 +32,8 @@
                             sub_header: True
                         MDBoxLayout:
                             spacing: 10
+                            size_hint_x: .7
+                            pos_hint: {"center_x": .5, "center_y": .5}
                             ThemeButton:
                                 theme: "Light"
                             ThemeButton:
@@ -44,6 +48,7 @@
                                 size_hint_x: None
                                 width: self.minimum_width
                                 id: accent_cont
+                                spacing: 5
 
                     MDBoxLayout:
                         # fonts
@@ -54,15 +59,18 @@
                             sub_header: True
                             text: "Font options"
                         MDBoxLayout:
-
-
-                AutoCustomThemeCard:
-                    is_button_widget: True
-                    size_hint_y: None
-                    height: "250dp"
+                            SwitchOptionItem:
+                                option: 'font_bold'
+                                text: "Make all text bold"
 
                 AutoCustomThemeCard:
                     is_button_widget: True
                     size_hint_y: None
                     height: "250dp"
+                    radius: 8
 
+                AutoCustomThemeCard:
+                    is_button_widget: True
+                    size_hint_y: None
+                    height: "250dp"
+                    radius: 8

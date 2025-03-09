@@ -8,4 +8,19 @@
     cols: 1
     spacing: 5
 
+<CommonMiniManager>:
+    size_hint_x: .3
 
+
+<CommonRecycleView>:
+    key_viewclass: 'viewclass'
+    key_size: 'height'
+
+<CommonRecycleBoxLayout>:
+    default_size: None, dp(56)
+    default_size_hint: 1, None
+    size_hint_y: None
+    height: self.minimum_height
+    orientation: 'vertical'
+    spacing: 5
+    padding: 10

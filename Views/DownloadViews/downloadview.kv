@@ -7,12 +7,13 @@
         MDBoxLayout:
             # top widgets
             size_hint_y: None
-            height: "52dp"
+            height: "48dp"
 
             MDAnchorLayout:
                 anchor_x: "left"
                 CommonLabel:
                     is_header: True
+                    text: "Downloads"
 
             MDAnchorLayout:
                 anchor_x: "right"
@@ -51,3 +52,12 @@
                     height: self.minimum_height
                     id: content
                     spacing: 5
+                    padding: 2
+
+<DownloadViewContainer>
+    size_hint_y: None
+    orientation: "vertical"
+    spacing: 2
+    padding: 5
+    is_parent_widget: True
+    radius: [10, 10, 10, 10]

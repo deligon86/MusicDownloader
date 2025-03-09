@@ -1,4 +1,4 @@
-from kivy.properties import ObjectProperty
+from kivy.properties import ObjectProperty, DictProperty
 from kivymd.uix.screen import MDScreen
 from kivymd.uix.responsivelayout import MDResponsiveLayout
 
@@ -14,12 +14,27 @@ class MainView(MDResponsiveLayout, MDScreen):
 
     app = ObjectProperty()
     mini_manager_parent = ObjectProperty(None)
+    views = DictProperty()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.common_screen_manager = None
         self.common_mini_manager = None
         self.bind(mini_manager_parent=self._on_mini_manager_parent)
+
+    # expose the download api here to all views
+    # title, download_url, type[Audio], file extension
+
+    def add_to_download_queue(self, title, link, type_, format_):
+        """
+        :param title:
+        :param link:
+        :param type_:
+        :param format_:
+        :return:
+        """
+
+        self.views['Downloads'].add_to_queue(title, link, type_, format_)
 
     def on_change_screen_type(self, screen):
 
@@ -42,13 +57,19 @@ class MainView(MDResponsiveLayout, MDScreen):
 
     def detach_mini_manager(self):
         """
-        Remove the mini manager from its current paren
+        Remove the mini manager from its current parent
         :return:
         """
         if self.common_mini_manager.parent:
             self.common_mini_manager.parent.remove_widget(self.common_mini_manager)
 
+    def force_mini_manager(self, parent):
+        """Had to use this since other parts of the code doesn't work completely
+        For instance when changing mini manager parent on TabletView using side_bar_open"""
+        self._on_mini_manager_parent(None, parent)
+
     def _on_mini_manager_parent(self, instance, parent):
         if parent:
             self.detach_mini_manager()
             parent.add_widget(self.common_mini_manager)
+

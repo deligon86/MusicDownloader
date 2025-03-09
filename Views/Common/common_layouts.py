@@ -6,7 +6,12 @@ from kivymd.uix.boxlayout import MDBoxLayout
 from kivy.properties import (
     ObjectProperty, BooleanProperty, NumericProperty, StringProperty
 )
+from kivymd.uix.progressbar import MDProgressBar
 from kivymd.uix.screenmanager import MDScreenManager
+from kivymd.uix.recycleview import MDRecycleView
+from kivy.uix.recycleboxlayout import RecycleBoxLayout
+from kivymd.theming import ThemableBehavior
+from kivymd.uix.widget import MDAdaptiveWidget
 
 
 class AutoColumnGrid(MDGridLayout):
@@ -208,3 +213,11 @@ class CommonMiniManager(CommonScreenManager):
 
     def _change_screen(self, instance, name):
         self.current = name.lower()
+
+
+class CommonRecycleView(MDRecycleView):
+    pass
+
+
+class CommonRecycleBoxLayout(ThemableBehavior, RecycleBoxLayout, MDAdaptiveWidget):
+    pass

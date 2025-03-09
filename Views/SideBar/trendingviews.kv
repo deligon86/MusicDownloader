@@ -1,0 +1,81 @@
+<TrendingArtistView>:
+    app: app
+    AutoCustomThemeCard:
+        orientation: "vertical"
+        padding: 5
+        MDBoxLayout:
+            size_hint_y: None
+            height: "42dp"
+            padding: 5
+            orientation: "vertical"
+            MDBoxLayout:
+                CommonLabel:
+                    sub_header: True
+                    text: "Trending Artists"
+
+                MDBoxLayout:
+                    adaptive_width: True
+                    CommonIconButton:
+                        icon: "refresh"
+                        on_release: root.refresh_view()
+
+                    CommonIconButton:
+                        icon: "chevron-right"
+                        on_release: root.screen_change_command("tr-song")
+            MDBoxLayout:
+                size_hint_y: None
+                height: '0dp'
+                MDProgressBar:
+                    id: progress
+                    type: "determinate"
+                    radius: 2
+
+        MDScrollView:
+
+            CommonRecycleView:
+                id: trending_artist
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+                CommonRecycleBoxLayout:
+
+<TrendingSongView>:
+    app: app
+    AutoCustomThemeCard:
+        orientation: "vertical"
+        padding: 5
+        MDBoxLayout:
+            size_hint_y: None
+            height: "42dp"
+            padding: 5
+            orientation: "vertical"
+            MDBoxLayout:
+
+                CommonLabel:
+                    sub_header: True
+                    text: "Trending Songs"
+
+                MDBoxLayout:
+                    adaptive_width: True
+                    CommonIconButton:
+                        icon: "refresh"
+                        on_release: root.refresh()
+
+                    CommonIconButton:
+                        icon: "chevron-right"
+                        on_release: root.screen_change_command("tr-artist")
+
+            MDBoxLayout:
+                size_hint_y: None
+                height: '0dp'
+                MDProgressBar:
+                    id: progress
+                    radius: 2
+                    opacity: 0
+
+        MDScrollView:
+
+            CommonRecycleView:
+                id: trending_song
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+                CommonRecycleBoxLayout:

@@ -18,7 +18,7 @@ def get_web_file_size(link=None, format_="MB"):
             case "gb":
                 return size / (1024 * 1024 * 1024)
     except:
-        return 1
+        return 0
 
 
 def is_valid_youtube_link(link):

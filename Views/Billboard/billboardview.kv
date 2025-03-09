@@ -36,10 +36,8 @@
                         halign: "center"
 
         MDBoxLayout:
-            MDScrollView:
-                MDBoxLayout:
-                    size_hint_y: None
-                    height: self.minimum_height
-                    spacing: 5
-                    id: content
-
+            CommonRecycleView:
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+                id: content
+                CommonRecycleBoxLayout:

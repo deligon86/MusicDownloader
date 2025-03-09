@@ -1,15 +1,13 @@
 import random
-
 import wikipedia
 from random import choice
 from bs4 import BeautifulSoup as Soup
-from network import BillboardConfig
+from Core.base import BillboardConfig
 from Core.base import connection, Logger, SessionManager
 
 
 class BillBoardManagerModel:
 
-    search_url = "https://www17.24naijamuzic.com/?s="
     artists_url = "https://www.billboard.com/charts/artist-100/"
     italy = "https://www.billboard.com/charts/billboard-italy-albums-top-100/"
     uk = "https://www.billboard.com/charts/official-uk-songs/"
@@ -82,6 +80,8 @@ class BillBoardManagerModel:
                 found[song.text.strip()] = [artist.text.strip(), image_tag.get('data-lazy-src')]
 
                 counter += 1
+        else:
+            raise ConnectionError("No internet connection")
         self.current_results = found
 
         return found
@@ -126,6 +126,8 @@ class BillBoardManagerModel:
                 found[artist] = [image, bio]
                 self.logger.info(f"[BillBoardResult] {artist}")
                 counter += 1
+        else:
+            raise ConnectionError("No internet connection")
         self.current_results_artists = found
         # discard session
         self.session_manager.delete_session("recom artist")
@@ -191,5 +193,7 @@ class BillBoardManagerModel:
                 artist = item.find_next("a", attrs={'class': 'track-artist'}).text.strip()
 
                 found[title] = artist
+        else:
+            raise ConnectionError("No internet connection")
 
         return found

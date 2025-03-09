@@ -47,14 +47,18 @@ class HipHopKitEngineModel(BaseEngine):
         return all_results'''
 
     def search(self, query, mode="all"):
+        all_results = {}
         if query:
             query = query.replace(" ", "+")
             url = self.search_url.format(query)  # build url
             logger.info(f"[HipHopKit Engine] Building query...")
             page = self.session.get(url)
-            all_results = self.parse_ordinal_page(page.text, mode.lower())
+            if mode == "artist":
+                all_results = self.__probe_for_artists(page.text, query)
+            else:
+                all_results = self.parse_ordinal_page(page.text, mode.lower())
 
-            return all_results
+        return all_results
 
     @staticmethod
     def parse_ordinal_page(page, mode="all"):
@@ -83,15 +87,15 @@ class HipHopKitEngineModel(BaseEngine):
                 im = ''
             if link:
                 # print("[+] Result: ", link.text)
-                link_text = link.get("href")
+                link_ = link.get("href")
                 if mode == "albums":
-                    if "[Album]" not in link_text:
+                    if "[Album]" not in link_:
                         continue
                 elif mode == "songs":
-                    if "[Album]" in link_text:
+                    if "[Album]" in link_:
                         continue
-                logger.info(f"[HipHopKit Engine] Found link for: {link_text}")
-                found[link.text] = [link_text, im, desc.text]
+                logger.info(f"[HipHopKit Engine] Found link for: {link_}")
+                found[link.text] = [link_, im, desc.text]
             index += 1
         logger.info(f"[HipHopKit Engine] Building results ...")
         return found

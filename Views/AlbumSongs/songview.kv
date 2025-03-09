@@ -13,7 +13,7 @@
                 CommonLabel:
                     is_header: True
                     id: title
-                    text: "Songs"
+                    text: "Albums"
 
             MDAnchorLayout:
                 anchor_x: "right"
@@ -21,29 +21,103 @@
                 MDBoxLayout:
                     spacing: 5
                     CommonLabel:
-                        text: "View: "
+                        text: "View Mode"
                         halign: "right"
                     CommonIconButton:
                         icon: "cogs"
                         pos_hint: {"center_x": .5, "center_y": .5}
+                        on_release: root.open_mode_menu(self)
 
-        MDScreenManager:
-            id: manager
-            transition: fade()
-            MDScreen:
-                name: 'albums'
-                MDScrollView:
-                    AutoColumnGrid:
-                        id: albums
+        MDFloatLayout:
+            id: screen_layout
+            MDScreenManager:
+                id: manager
+                transition: fade()
+                pos_hint: {"center_x": .5, "center_y": .5}
+                MDScreen:
+                    name: 'albums'
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        MDScrollView:
+                            AutoColumnGrid:
+                                id: albums
 
-            MDScreen:
-                name: "foreign"
-                MDScrollView:
-                    AutoColumnGrid:
-                        id: foreign
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: '42dp'
+                            MDAnchorLayout:
+                                anchor_x: 'left'
+                                CommonLabel:
+                                    id: pager_a
+                                    text: "Page 1"
 
-            MDScreen:
-                name: "songs"
-                MDScrollView:
-                    AutoColumnGrid:
-                        id: songs
+                            MDAnchorLayout:
+                                anchor_x: 'right'
+                                size_hint_x: .25
+                                MDBoxLayout:
+                                    spacing: 20
+                                    CommonIconButton:
+                                        icon: "arrow-left"
+                                        on_release: root.navigate(pager_a, "previous")
+                                    CommonIconButton:
+                                        icon: "arrow-right"
+                                        on_release: root.navigate(pager_a)
+
+                MDScreen:
+                    name: "foreign"
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        MDScrollView:
+                            AutoColumnGrid:
+                                id: foreign
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: '42dp'
+                            MDAnchorLayout:
+                                anchor_x: 'left'
+                                CommonLabel:
+                                    id: pager_f
+                                    text: "Page 1"
+
+                            MDAnchorLayout:
+                                anchor_x: 'right'
+                                size_hint_x: .25
+                                MDBoxLayout:
+                                    spacing: 20
+                                    CommonIconButton:
+                                        icon: "arrow-left"
+                                        on_release: root.navigate(pager_f, "previous")
+                                    CommonIconButton:
+                                        icon: "arrow-right"
+                                        on_release: root.navigate(pager_f)
+
+                MDScreen:
+                    name: "songs"
+                    MDBoxLayout:
+                        orientation: "vertical"
+
+                        MDScrollView:
+                            AutoColumnGrid:
+                                id: songs
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: '42dp'
+                            MDAnchorLayout:
+                                anchor_x: 'left'
+                                CommonLabel:
+                                    id: pager_s
+                                    text: "Page 1"
+
+                            MDAnchorLayout:
+                                anchor_x: 'right'
+                                size_hint_x: .25
+                                MDBoxLayout:
+                                    spacing: 20
+                                    CommonIconButton:
+                                        icon: "arrow-left"
+                                        on_release: root.navigate(pager_s, "previous")
+                                    CommonIconButton:
+                                        icon: "arrow-right"
+                                        on_release: root.navigate(pager_s)
