@@ -1,0 +1,401 @@
+<CommonTextField>:
+    app: app
+
+<CommonLabel>:
+    app: app
+    shorten_from: "right"
+
+<CommonIcon>:
+    app: app
+
+<ScrollableLabel>:
+    CommonLabel:
+        size_hint_y: None
+        height: self.texture_size[1]
+        text: root.text
+
+<RoundedAsyncImage>:
+
+    canvas.before:
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: root.radius
+
+<CommonIconButton>:
+    radius: [40,]
+    size_hint: None, None
+    width: 40
+    height: 40
+    ripple_behavior: True
+    MDFloatLayout:
+        MDIcon:
+            id: icon
+            icon: root.icon
+            font_size: f"{root.icon_size}sp"
+            pos_hint: {"center_x": .5, "center_y": .5}
+
+<CommonYoutubeItem>:
+    size_hint_y: None
+    height: "180dp"
+    radius: 5
+    inherit_color: True
+
+    MDFloatLayout:
+        # image
+        size_hint_x: .5
+        padding: 5
+
+        MDBoxLayout:
+            radius: 10
+            padding: 5
+            pos_hint: {"center_x": .5, "center_y": .5}
+            orientation: "vertical"
+            MDBoxLayout:
+                id: prog_cont
+                size_hint_y: None
+                height: 0
+
+            AsyncImage:
+                source: root.thumbnail
+
+        CommonLabel:
+            text: root.duration
+            pos_hint: {"center_x": .75, "center_y": .18}
+            size_hint: None, None
+            size: [70, 20]
+            halign: "center"
+            make_custom: True
+
+    MDBoxLayout:
+        # description
+        orientation: "vertical"
+        MDBoxLayout:
+            padding: [20, 0, 0, 0]
+            orientation: "vertical"
+            spacing: 5
+            CommonLabel:
+                sub_header: True
+                font_size: "20sp"
+                text: root.title
+                shorten: True
+                shorten_from: "right"
+            MDBoxLayout:
+                MDAnchorLayout:
+                    anchor_x: 'left'
+                    MDBoxLayout:
+                        spacing: 10
+                        CommonLabel:
+                            text: root.views
+                            shorten: True
+                            shorten_from: "right"
+                            halign: "right"
+                            size_hint_x: .8
+                            small: True
+                        MDIcon:
+                            icon: 'circle'
+                            font_size: '5sp'
+                            size_hint: None, None
+                            size: [10, 10]
+                            pos_hint: {"center_x": .5, "center_y": .5}
+
+                        CommonLabel:
+                            text: root.publish_date
+                            shorten: True
+                            shorten_from: "right"
+                            small: True
+                MDAnchorLayout:
+                    anchor_x: 'right'
+
+        MDBoxLayout:
+            #channel
+            size_hint_y: .4
+            MDFloatLayout:
+                size_hint: .15, .5
+                AsyncImage:
+                    source: root.channel_image
+                    #radius: [10, 10, 10, 10]
+                    pos_hint: {"center_x": .5, "center_y": .5}
+
+            CommonLabel:
+                text: root.author
+                halign: "left"
+                valign: "center"
+                small: True
+                pos_hint: {"center_x": .5, "center_y": .5}
+
+        MDBoxLayout:
+            padding: [20, 5, 20, 5]
+            ScrollableLabel:
+                text: root.description
+
+    MDFloatLayout:
+        size_hint_x: .3
+        CommonIconButton:
+            enable_custom: False
+            icon: "download-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            on_release: root.initiate_download()
+
+<CommonYouTubeHttpResultItem>:
+    size_hint_y: None
+    height: dp(130)
+    inherit_color: True
+    padding: 10
+    radius: 5
+    orientation: "vertical"
+    MDBoxLayout:
+        id: prog_cont
+        size_hint_y: None
+        height: 0
+
+    MDBoxLayout:
+        MDBoxLayout:
+            orientation: "vertical"
+            CommonLabel:
+                bold: True
+                text: root.title
+
+            CommonLabel:
+                text: f"Stream Type: {root.stream_type}  Stream Quality: {root.stream_quality}"
+
+        MDFloatLayout:
+            size_hint_x: .2
+            CommonIconButton:
+                enable_custom: False
+                icon: "download-outline"
+                pos_hint: {"center_x": .5, "center_y": .5}
+                on_release: root.initiate_download()
+
+# for SearchView search results
+<CommonSearchResult>:
+    size_hint_y: None
+    height: "150dp"
+    inherit_color: True
+    MDBoxLayout:
+        # image
+        size_hint_x: .3
+        padding: 5
+        orientation: "vertical"
+        MDBoxLayout:
+            id: prog_cont
+            size_hint_y: None
+            height: 0
+        AsyncImage:
+            source: root.image
+
+    MDBoxLayout:
+        # description
+        orientation: "vertical"
+        MDBoxLayout:
+            padding: [20, 0, 0, 5]
+            orientation: "vertical"
+            spacing: 5
+            CommonLabel:
+                text: root.title
+                shorten: True
+                shorten_from: "right"
+
+            CommonLabel:
+                text: root.description
+                shorten: True
+                shorten_from: "right"
+                theme_text_color: "Secondary"
+                small: True
+
+        MDBoxLayout:
+            padding: [10, 0, 0, 0]
+            size_hint_y: .2
+            CommonLabel:
+                text: root.artist
+                font_size: "15sp"
+                small: True
+
+    MDFloatLayout:
+        size_hint_x: .3
+        CommonIconButton:
+            icon: "download-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            on_release: root.initiate_download()
+
+
+<NavigationButton>:
+    inherit_color: True
+    radius: 0
+    is_button_widget: True
+    ripple_behavior: True
+    on_release:
+        root.parent.mark_widget(self, icon, lbl)
+
+    MDFloatLayout:
+        size_hint_x: .4
+        CommonIcon:
+            id: icon
+            icon: root.icon
+            pos_hint: {"center_x": .5, "center_y": .5}
+            font_size: "24dp"
+
+    MDBoxLayout:
+        CommonLabel:
+            id: lbl
+            text: root.text
+            solid: True
+            halign: "left"
+            shorten: True
+
+<MyNavigationBar>:
+    app: app
+
+# Option view items
+<ThemeButton>:
+    app: app
+    MDCheckbox:
+        id: check
+        group: 'theme'
+        on_active: root.set_value(self, self.active)
+        size_hint: None, None
+        size: '48dp', '48dp'
+        pos_hint: {"center_x": .5, "center_y": .5}
+
+    CommonLabel:
+        text: root.theme
+        halign: "center"
+
+<SwitchOptionItem>:
+    app: app
+    padding: 10
+    CommonLabel:
+        text: root.text
+        size_hint_x: .7
+    MDFloatLayout:
+        size_hint_x: .25
+        MDSwitch:
+            on_active: root.set_value(*args)
+            pos_hint: {"center_x": .65, "center_y": .5}
+
+
+<AccentColorButton>:
+    app: app
+    size_hint: None, None
+    size: "60dp", "60dp"
+    radius: self.width
+
+<FontSizeBox>:
+    size_hint_x: None
+    radius: 5
+    app: app
+    size_hint_y: None
+    height: 42
+    MDTextField:
+        active_line: False
+        pos_hint: {"center_x": .5, "center_y": .45}
+        on_text_validate: root.receive_font_size(self.text)
+        on_focus: root.adjust_focus(self, self.focus)
+        line_color_normal: root.md_bg_color
+
+    MDBoxLayout:
+        size_hint: None, None
+        height: 3
+        width: self.width
+        md_bg_color: [.5, .5, .5, .5]
+        radius: [0, 0, 2, 2]
+        id: line
+        pos_hint: {"center_x": .5, "center_y": .05}
+
+# menu
+<MenuDropDown>:
+    radius: 5
+    padding: 10
+    is_parent_widget: True
+    pos_hint: {"center_x": .5, "center_y": .5}
+    CommonLabel:
+        text: root.value
+        id: lbl
+        halign: "center"
+
+    MDBoxLayout:
+        adaptive_width: True
+        CommonIconButton:
+            id: caller
+            icon_size: root.icon_size
+            size: root.icon_wh
+            icon: "chevron-down"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            on_release: root.open_menu(self) if root.has_menu_items else root.create_menu(self)
+
+# Song view items
+<SongViewCardItem>:
+    orientation: "vertical"
+    padding: 5
+    spacing: 2
+    radius: 8
+    size_hint: None, None
+    MDBoxLayout:
+        id: prog_cont
+        size_hint_y: None
+        height: 0
+
+    MDBoxLayout:
+        AsyncImage:
+            source: root.image
+    MDBoxLayout:
+        size_hint_y: .3
+        spacing: 4
+        orientation: "vertical"
+        radius: [0, 0, 5, 5]
+        padding: 5
+        CommonLabel:
+            text: root.title
+            shorten: True
+        CommonLabel:
+            text: root.artist
+            default_theme_text_color: "Secondary"
+            theme_text_color: "Secondary"
+            small: True
+            size_hint_y: 1 if root.artist else 0.001
+
+# trending items
+<TrendingSongViewItem>:
+    size_hint_y: None
+    height: "60dp"
+    spacing: 10
+    MDBoxLayout:
+        size_hint_x: None
+        width: root.height
+        padding: 5
+        AsyncImage:
+            source: root.image
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: 4
+        CommonLabel:
+            text: root.song
+        CommonLabel:
+            text: root.artist
+            small: True
+
+    MDFloatLayout:
+        size_hint_x: .3
+        CommonIconButton:
+            icon: "download-outline"
+            pos_hint: {"center_x": .5, "center_y": .5}
+            on_release: root.initiate_download()
+
+<TrendingArtistViewItem>:
+    size_hint_y: None
+    height: "60dp"
+    spacing: 10
+    MDBoxLayout:
+        id: num_cont
+        size_hint_x: 0.001
+    MDBoxLayout:
+        size_hint_x: None
+        width: root.height
+        padding: 5
+        AsyncImage:
+            source: root.image
+    MDBoxLayout:
+        orientation: "vertical"
+        spacing: 4
+        CommonLabel:
+            text: root.artist

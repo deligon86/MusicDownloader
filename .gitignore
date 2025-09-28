@@ -1,0 +1,33 @@
+# Python virtual environment directories
+Lib/
+Scripts/
+Include/
+share/
+pyvenv.cfg
+
+# Auto-generated files
+version.txt
+app_builder/version.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Installer and signing artifacts
+*.cer
+*.iss
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Ignore compiled Python files
+*.pyc
+
+# Ignore backups
+*~

@@ -1,0 +1,61 @@
+<DesktopView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        MDBoxLayout:
+            orientation: "vertical"
+            AutoCustomThemeCard:
+                size_hint_y: None
+                height: '52dp'
+                is_button_widget: True
+                radius: 0
+                elevation: 1
+                shadow_softness: 4
+                MDAnchorLayout:
+                    anchor_x: "left"
+                    MDBoxLayout:
+                        #radius: [20,]
+                        padding: 2
+                        #md_bg_color: [0, 0, 0, 1] if app.theme_cls.theme_style == "Dark" else [.95, .95, .95, 1]
+                        MyNavigationBar:
+                            # nav content
+                            view: root
+                            NavigationButton:
+                                icon: "home"
+                                text: "Songs"
+                                radius: [10, 0, 0, 10]
+
+                            NavigationButton:
+                                icon: "magnify"
+                                text: "Search"
+
+                            NavigationButton:
+                                icon: "youtube"
+                                text: "YouTube"
+
+                            NavigationButton:
+                                icon: "chart-donut-variant"
+                                text: "Billboard"
+
+                            NavigationButton:
+                                icon: "download"
+                                text: "Downloads"
+                                radius: 0
+
+                MDAnchorLayout:
+                    anchor_x: "right"
+                    size_hint_x: .2
+                    padding: 10
+                    CommonIconButton:
+                        icon: "cog-outline"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        on_release: root.receive_screen_request('settings')
+
+            MDBoxLayout:
+                id: layout
+                padding: 5
+
+        AutoCustomThemeCard:
+            is_button_widget: True
+            size_hint_x: .4
+            id: side_bar_layout
+            radius: 0

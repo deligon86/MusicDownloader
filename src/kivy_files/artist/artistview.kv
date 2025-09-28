@@ -1,0 +1,28 @@
+<ArtistView>:
+    AutoCustomThemeCard:
+        orientation: "vertical"
+        padding: 10
+        MDBoxLayout:
+            # image bio
+            size_hint_y: .8
+            MDBoxLayout:
+                size_hint_y: None
+                height: '42dp'
+                CommonLabel:
+                    id: artist
+                    sub_header: True
+            MDBoxLayout:
+                ScrollableLabel:
+                    id: bio
+            MDBoxLayout:
+                size_hint_x: .6
+                AsyncImage:
+                    id: image
+
+        MDBoxLayout:
+
+            CommonRecycleView:
+                key_viewclass: 'viewclass'
+                key_size: 'height'
+                id: content
+                CommonRecycleBoxLayout:

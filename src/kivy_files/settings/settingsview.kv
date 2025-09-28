@@ -1,0 +1,158 @@
+<SettingsView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+
+        MDScrollView:
+            MDBoxLayout:
+                orientation: "vertical"
+                size_hint_y: None
+                height: self.minimum_height
+                spacing: 8
+                padding: 10
+
+                AutoCustomThemeCard:
+                    is_button_widget: True
+                    size_hint_y: None
+                    height: "420dp"
+                    radius: 8
+                    padding: 5
+                    orientation: "vertical"
+                    CommonLabel:
+                        size_hint_y: None
+                        height: '48dp'
+                        text: "Theme and Font Options"
+                        is_header: True
+
+                    MDBoxLayout:
+                        # themes
+                        orientation: "vertical"
+                        padding: 5
+                        spacing: 5
+                        size_hint_y: None
+                        height: 110
+                        CommonLabel:
+                            size_hint_y: None
+                            height: '48dp'
+                            text: "Theme"
+                            sub_header: True
+                        MDBoxLayout:
+                            spacing: 10
+                            size_hint_x: .7
+                            pos_hint: {"center_x": .5, "center_y": .5}
+                            id: theme_cont
+
+                    MDBoxLayout:
+                        # accent color
+                        padding: 5
+                        size_hint_y: None
+                        height: 90
+                        MDScrollView:
+                            MDBoxLayout:
+                                size_hint_x: None
+                                width: self.minimum_width
+                                id: accent_cont
+                                spacing: 5
+
+                    MDBoxLayout:
+                        # fonts
+                        orientation: "vertical"
+                        padding: 5
+                        spacing: 5
+                        CommonLabel:
+                            size_hint_y: None
+                            height: '48dp'
+                            sub_header: True
+                            text: "Font options"
+                        MDBoxLayout:
+                            orientation: "vertical"
+                            SwitchOptionItem:
+                                option: 'font_bold'
+                                text: "Make all text bold"
+                            MDBoxLayout:
+                                CommonLabel:
+                                    text: "Font size"
+                                FontSizeBox:
+                                    padding: 5
+                                    pos_hint: {"center_x": .5, "center_y": .5}
+
+
+                AutoCustomThemeCard:
+                    is_button_widget: True
+                    size_hint_y: None
+                    height: "280dp"
+                    radius: 8
+                    orientation: "vertical"
+                    padding: 5
+                    CommonLabel:
+                        size_hint_y: None
+                        height: '52dp'
+                        text: "Downloads"
+                        is_header: True
+
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        padding: 5
+                        spacing: 5
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: 52
+                            CommonLabel:
+                                text: "Download location"
+                                size_hint_x: .5
+                                shorten: True
+                                halign: "left"
+                            CommonTextField:
+                                id: download_loc
+
+                            CommonIconButton:
+                                icon: "folder"
+                                on_release: root.select_download_location()
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: 52
+                            CommonLabel:
+                                text: "Simultaneous downloads"
+                                size_hint_x: .7
+                            MenuDropDown:
+                                type_: "sim_downloads"
+                                value: "3"
+                                values: [1, 2, 4, 5, 6]
+                                size_hint_x: None
+                                width: 160
+                                id: sim_dl
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: 52
+                            CommonLabel:
+                                text: "Default video quality"
+                                size_hint_x: .7
+                            MenuDropDown:
+                                type_: "video_quality"
+                                value: "720p"
+                                values: ["144p", "240p", "360p", "480p", "540p", "720p", "1080p"]
+                                size_hint_x: None
+                                width: 160
+                                id: video_quality
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: 52
+                            CommonLabel:
+                                text: "Default audio quality"
+                                size_hint_x: .7
+                            MenuDropDown:
+                                type_: "audio_quality"
+                                value: "128kbps"
+                                values: ["50kbps", "60kbps","70kbps", "96kbps", "128kbps", "160kbps", "192kbps","320kbps"]
+                                size_hint_x: None
+                                width: 160
+                                id: audio_quality
+
+                #AutoCustomThemeCard:
+                #    is_button_widget: True
+                #    size_hint_y: None
+                #    height: "250dp"
+                #    radius: 8
+                #    padding: 5

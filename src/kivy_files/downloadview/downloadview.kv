@@ -1,0 +1,64 @@
+<DownloadView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        padding: 10
+        orientation: "vertical"
+
+        MDBoxLayout:
+            # top widgets
+            size_hint_y: None
+            height: "48dp"
+
+            MDAnchorLayout:
+                anchor_x: "left"
+                CommonLabel:
+                    is_header: True
+                    text: "Downloads"
+
+            MDAnchorLayout:
+                anchor_x: "right"
+                size_hint_x: .4
+                MDBoxLayout:
+                    spacing: 5
+                    padding: 5
+                    AutoCustomThemeCard:
+                        is_button_widget: True
+                        ripple_behavior: True
+                        radius: 10
+                        MDFloatLayout:
+                            size_hint_x: .4
+                            MDIcon:
+                                icon: "trash-can"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                        CommonLabel:
+                            text: "Clear all"
+
+                    AutoCustomThemeCard:
+                        is_button_widget: True
+                        ripple_behavior: True
+                        radius: 10
+                        MDFloatLayout:
+                            size_hint_x: .4
+                            MDIcon:
+                                icon: "arrow-top-right-bold-box"
+                                pos_hint: {"center_x": .5, "center_y": .5}
+                        CommonLabel:
+                            text: "Folder"
+
+        MDBoxLayout:
+            MDScrollView:
+                MDBoxLayout:
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: self.minimum_height
+                    id: content
+                    spacing: 5
+                    padding: 2
+
+<DownloadViewContainer>
+    size_hint_y: None
+    orientation: "vertical"
+    spacing: 2
+    padding: 5
+    is_parent_widget: True
+    radius: [10, 10, 10, 10]

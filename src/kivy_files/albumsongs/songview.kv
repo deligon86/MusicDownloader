@@ -1,0 +1,132 @@
+#: import fade kivy.uix.screenmanager.FadeTransition
+<SongsView>:
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+        padding: 10
+        MDBoxLayout:
+            size_hint_y: None
+            height: '42dp'
+            padding: 10
+            MDAnchorLayout:
+                anchor_x: "left"
+                CommonLabel:
+                    is_header: True
+                    id: title
+                    text: "Albums"
+
+            MDAnchorLayout:
+                anchor_x: "right"
+                size_hint_x: .3
+                MDBoxLayout:
+                    spacing: 5
+                    CommonLabel:
+                        text: "View Mode"
+                        halign: "center"
+                    CommonIconButton:
+                        icon: "cogs"
+                        pos_hint: {"center_x": .5, "center_y": .5}
+                        on_release: root.open_mode_menu(self)
+
+        MDFloatLayout:
+            id: screen_layout
+            MDScreenManager:
+                id: manager
+                transition: fade()
+                pos_hint: {"center_x": .5, "center_y": .5}
+                MDScreen:
+                    name: 'albums'
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        MDScrollView:
+                            AutoColumnGrid:
+                                id: albums
+                                cols: 4
+                                size_hint_y: None
+                                height: self.minimum_height
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: '42dp'
+                            MDAnchorLayout:
+                                anchor_x: 'left'
+                                CommonLabel:
+                                    id: pager_a
+                                    text: "Page 1"
+
+                            MDAnchorLayout:
+                                anchor_x: 'right'
+                                size_hint_x: .2
+                                MDBoxLayout:
+                                    spacing: 20
+                                    CommonIconButton:
+                                        icon: "arrow-left"
+                                        on_release: root.navigate(pager_a, "previous")
+                                    CommonIconButton:
+                                        icon: "arrow-right"
+                                        on_release: root.navigate(pager_a)
+
+                MDScreen:
+                    name: "foreign"
+                    MDBoxLayout:
+                        orientation: "vertical"
+                        MDScrollView:
+                            AutoColumnGrid:
+                                id: foreign
+                                cols: 4
+                                size_hint_y: None
+                                height: self.minimum_height
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: '42dp'
+                            MDAnchorLayout:
+                                anchor_x: 'left'
+                                CommonLabel:
+                                    id: pager_f
+                                    text: "Page 1"
+
+                            MDAnchorLayout:
+                                anchor_x: 'right'
+                                size_hint_x: .2
+                                MDBoxLayout:
+                                    spacing: 20
+                                    CommonIconButton:
+                                        icon: "arrow-left"
+                                        on_release: root.navigate(pager_f, "previous")
+                                    CommonIconButton:
+                                        icon: "arrow-right"
+                                        on_release: root.navigate(pager_f)
+
+                MDScreen:
+                    name: "songs"
+                    MDBoxLayout:
+                        orientation: "vertical"
+
+                        MDScrollView:
+                            AutoColumnGrid:
+                                id: songs
+                                cols: 4
+                                size_hint_y: None
+                                height: self.minimum_height
+
+                        MDBoxLayout:
+                            size_hint_y: None
+                            height: '42dp'
+                            MDAnchorLayout:
+                                anchor_x: 'left'
+                                CommonLabel:
+                                    id: pager_s
+                                    text: "Page 1"
+
+                            MDAnchorLayout:
+                                anchor_x: 'right'
+                                size_hint_x: .2
+                                MDBoxLayout:
+                                    spacing: 20
+                                    CommonIconButton:
+                                        icon: "arrow-left"
+                                        on_release: root.navigate(pager_s, "previous")
+                                    CommonIconButton:
+                                        icon: "arrow-right"
+                                        on_release: root.navigate(pager_s)

@@ -1,0 +1,41 @@
+<YouTubeView>:
+
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+        padding: 2
+        spacing: 5
+
+        # Search bar
+        MDBoxLayout:
+            size_hint: .8, None
+            height: '42dp'
+            padding: 8
+            CommonTextField:
+                hint_text: "Search"
+                icon_left: "magnify"
+                pos_hint: {"center_x": .5, "center_y": .5}
+                on_text_validate: root.search(self.text)
+
+        # Content
+        MDBoxLayout:
+            padding: 8
+            MDScrollView:
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: self.minimum_height
+                    spacing: 5
+                    orientation: "vertical"
+                    id: content
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: 4
+            padding: 2
+            MDProgressBar:
+                id: progress
+                value: 20
+                opacity: 0
+                radius: 2
+                color: app.theme_color
+                type: "determinate"

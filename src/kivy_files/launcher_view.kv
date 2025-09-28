@@ -1,0 +1,241 @@
+#:import Window kivy.core.window.Window
+<LauncherView>:
+
+    AutoCustomThemeCard:
+        is_parent_widget: True
+        orientation: "vertical"
+        ScreenManager:
+            id: view_manager
+
+        MDBoxLayout:
+            size_hint_y: None
+            height: '100dp'
+            MDAnchorLayout:
+                anchor_x: 'left'
+                MDFloatLayout:
+                    # page indicator
+                    size_hint_y: None
+                    height: 40
+                    id: indic_holder
+                    pos_hint: {'center_x': .5, 'center_y': .5}
+                    CommonIconButton:
+                        id: 1
+                        icon: "circle"
+                        icon_size: 18
+                        disabled: True
+                        pos_hint: {'center_x': .5, 'center_y': .5}
+
+                    CommonIconButton:
+                        id: 2
+                        icon: "circle-outline"
+                        icon_size: 18
+                        disabled: True
+                        pos_hint: {'center_x': .56, 'center_y': .5}
+
+                    CommonIconButton:
+                        id: 3
+                        icon: "circle-outline"
+                        icon_size: 18
+                        disabled: True
+                        pos_hint: {'center_x': .62, 'center_y': .5}
+
+                    CommonIconButton:
+                        id: 4
+                        icon: "circle-outline"
+                        icon_size: 18
+                        disabled: True
+                        pos_hint: {'center_x': .68, 'center_y': .5}
+
+            MDAnchorLayout:
+                anchor_x: 'right'
+                size_hint_x: None
+                width: '100dp'
+                MDBoxLayout:
+                    spacing: 8
+                    pos_hint: {'center_x': .5, 'center_y': .5}
+                    CommonIconButton:
+                        icon: "chevron-left"
+                        on_release: root.prev_step()
+                        disabled: True
+                        id: prev
+                        pos_hint: {'center_x': .5, 'center_y': .5}
+                    CommonIconButton:
+                        id: nxt
+                        icon: "chevron-right"
+                        on_release: root.next_step()
+                        pos_hint: {'center_x': .5, 'center_y': .5}
+
+
+<WelcomeView>:
+
+    MDBoxLayout:
+        orientation: "vertical"
+        pos_hint: {'center_x': .5, 'center_y': .5}
+        MDFloatLayout:
+            FitImage:
+                source: "assets/relodownloader-splash.png"
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                radius: 0
+                #size_hint: None, None
+                width: self.height
+        MDFloatLayout:
+            MDBoxLayout:
+                orientation: "vertical"
+                pos_hint: {'center_x': .5, 'center_y': .6}
+                size_hint_y: None
+                height: '140dp'
+                CommonLabel:
+                    more_header: True
+                    text: "Get Started"
+                    make_custom: True
+                    halign: "center"
+
+                CommonLabel:
+                    text: "Welcome to an incredible python music downloader.\nWhy wait? Lets go"
+                    halign: "center"
+
+
+<ThemeSettingsView>:
+
+    MDBoxLayout:
+
+        MDFloatLayout:
+
+            MDBoxLayout:
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                orientation: "vertical"
+                size_hint_y: None
+                height: "200dp"
+
+                MDBoxLayout:
+                    orientation: "vertical"
+                    spacing: 10
+                    CommonLabel:
+                        more_header: True
+                        text: "Select theme"
+                        make_custom: True
+                        halign: "center"
+
+                    MDBoxLayout:
+                        size_hint_x: .7
+                        pos_hint: {'center_x': .5, 'center_y': .5}
+                        ThemeButton:
+                            group: "theme"
+                            theme: "Light"
+                            active: True
+                            callback: root.set_app_theme
+
+                        ThemeButton:
+                            group: "theme"
+                            theme: "Dark"
+                            callback: root.set_app_theme
+
+                        ThemeButton:
+                            group: "theme"
+                            theme: "Black"
+                            callback: root.set_app_theme
+
+
+<DownloadSettingsView>:
+
+    MDBoxLayout:
+
+        MDFloatLayout:
+
+            MDBoxLayout:
+                pos_hint: {'center_x': .5, 'center_y': .5}
+                orientation: "vertical"
+                size_hint_y: None
+                height:'400dp'
+                spacing: "10dp"
+                size_hint_x: .7
+                MDBoxLayout:
+                    size_hint_y: None
+                    height: "52dp"
+                    CommonLabel:
+                        more_header: True
+                        text: "Select"
+                        make_custom: True
+                        halign: 'center'
+
+                MDBoxLayout:
+                    pos_hint: {'center_x': .5, 'center_y': .5}
+                    orientation: "vertical"
+                    size_hint_y: None
+                    height: "250dp"
+                    spacing: "10dp"
+                    MDBoxLayout:
+                        # download location
+                        size_hint_y: None
+                        height: '52dp'
+                        spacing: "10dp"
+                        CommonLabel:
+                            text: "Download location"
+                            size_hint_x: .5
+                            shorten: True
+                            halign: "left"
+
+                        CommonTextField:
+                            id: download_location
+                            disabled: True
+
+                        CommonIconButton:
+                            icon: "folder"
+                            on_release: root.select_download_location()
+
+                    MDBoxLayout:
+                        # audio quality
+                        size_hint_y: None
+                        height: '52dp'
+                        CommonLabel:
+                            text: "Default audio quality"
+                            size_hint_x: .7
+                        MenuDropDown:
+                            type_: "audio_quality"
+                            value: "128kbps"
+                            values: ["50kbps", "60kbps","70kbps", "96kbps", "128kbps", "160kbps", "192kbps","320kbps"]
+                            size_hint_x: None
+                            width: 160
+                            callback: root.set_audio_quality
+
+                    MDBoxLayout:
+                        # video quality
+                        size_hint_y: None
+                        height: '52dp'
+                        CommonLabel:
+                            text: "Default video quality"
+                            size_hint_x: .7
+                        MenuDropDown:
+                            type_: "video_quality_launcher"
+                            value: "720p"
+                            values: ["144p", "240p", "360p", "480p", "540p", "720p", "1080p"]
+                            size_hint_x: None
+                            width: 160
+                            callback: root.set_video_quality
+
+<FinishView>:
+
+    MDBoxLayout:
+
+        MDFloatLayout:
+
+            CommonLabel:
+                text: "You can configure more on settings page!"
+                pos_hint: {'center_x': .5, 'center_y': .6}
+                sub_header: True
+                halign: "center"
+
+            AutoCustomThemeCard:
+                is_button_widget: True
+                id: finish
+                on_release: root.set_finish_flag()
+                size_hint: None, None
+                width: "80dp"
+                height: "60dp"
+                radius: "10dp"
+                pos_hint: {'center_x': .5, 'center_y': .4}
+                ripple_behavior: True
+                CommonLabel:
+                    text: "Finish"
+                    halign: "center"
+
