@@ -8,6 +8,11 @@ pyvenv.cfg
 # Auto-generated files
 version.txt
 app_builder/version.json
+build.spec
+
+# IDE folders
+.idea/
+.vscode/
 
 # OS-specific files
 .DS_Store
