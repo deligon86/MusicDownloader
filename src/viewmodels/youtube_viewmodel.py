@@ -1,6 +1,6 @@
 import threading
 from src.core.utils.utils import set_variable
-from kivy.clock import Clock
+from kivy.clock import Clock, mainthread
 from kivy.event import EventDispatcher
 from kivy.properties import ListProperty
 from src.models.YouTube.youtube_model import YouTubeModel
@@ -30,9 +30,16 @@ class YouTubeViewModel(EventDispatcher):
         def mini_task(text):
             res = self._model.results_query(text, only_audio=audio_only, video_only=video_only, mode=mode, search_one=search_one)
             res = list(res)
-            Clock.schedule_once(lambda c: set_variable(self, "search_results", res, c), 0)
+            self._set_search_results(res)
 
         threading.Thread(target=mini_task, args=(query, ), daemon=True).start()
+
+    @mainthread
+    def _set_search_results(self, results):
+        """
+        Sets the search results for dispatch
+        """
+        self.search_results = results
 
     def quick_search_url(self, query, audio_only=None, video_only=None):
         """

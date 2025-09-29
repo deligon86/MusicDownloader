@@ -62,6 +62,4 @@ class CustomThread(threading.Thread):
             # Call error callback if provided
             if self._error_callback:
                 self._error_callback(e)
-        finally:
-            # Cleanup resources
-            pass
+

@@ -7,33 +7,26 @@ import pathlib
 import datetime
 import aiofiles
 import requests
+from typing import Optional, Dict, Any
 from src.core import logger
-from src.core.utils.utils import set_variable
 from src.core.utils.utils import sanitize_filename
 from src.core.utils.customthread import CustomThread
-from src.core.utils.utils import get_web_file_size
-from kivy.clock import Clock
+from src.core.utils.utils import get_remote_file_size
+from kivy.clock import Clock, mainthread
 from kivy.utils import platform
 from kivy.event import EventDispatcher
 from kivy.properties import (
-    StringProperty, NumericProperty,
-    BooleanProperty
+    StringProperty, NumericProperty, BooleanProperty
 )
 
 
-def wait_for_file(path, timeout=5.0, interval=0.2):
-    """
-    Waits for a file to appear on disk, retrying for up to `timeout` seconds.
-    """
-    start = time.time()
-    while time.time() - start < timeout:
-        if path.exists() and path.stat().st_size > 0:
-            return True
-        time.sleep(interval)
-    return False
-
-
 class DownloadModel(EventDispatcher):
+    """
+    Manages file downloads with support for both synchronous and asynchronous operations.
+    Provides progress tracking, pause/resume functionality, and error handling.
+    """
+    
+    # Kivy Properties
     waiting_for_download = BooleanProperty(defaultvalue=False)
     finished_download = BooleanProperty(defaultvalue=False, force_dispatch=True)
     paused = BooleanProperty(defaultvalue=False)
@@ -45,312 +38,433 @@ class DownloadModel(EventDispatcher):
     error = StringProperty(force_dispatch=True)
     status = StringProperty(force_dispatch=True)
 
+    # Constants
+    MIN_DELAY = 0.001  # 1ms minimum delay for UI updates
+    CHUNK_SIZE = 8192  # 8KB chunks for better performance
+    DOWNLOAD_TIMEOUT = 30
+    FILE_WAIT_TIMEOUT = 5.0
+    FILE_WAIT_INTERVAL = 0.2
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.url =None
-        self.title = None
-        self.download_file_path = None
-        self.file_type = None
-        self.file_size = None
-        self.file_format = None
-        self.bytes_downloaded = 0
-        self.downloading = False
-        self.download_thread = None
-        self.in_simulation = False
+        self._initialize_state()
 
-        self.delay = 0.001  # 1ms Minimum delay for transmitting messages
-        self._task = None
+    def _initialize_state(self):
+        """Initialize all instance variables to their default states."""
+        self.url: Optional[str] = None
+        self.title: Optional[str] = None
+        self.download_file_path: Optional[str] = None
+        self.file_type: Optional[str] = None
+        self.file_size: Optional[int] = None
+        self.file_format: Optional[str] = None
+        self.bytes_downloaded: int = 0
+        self.downloading: bool = False
+        self.download_thread: Optional[CustomThread] = None
+        self.in_simulation: bool = False
+        self._task: Optional[asyncio.Task] = None
+        self._session: Optional[aiohttp.ClientSession] = None
 
-    def set_variables(self, title, link, file_type, file_format, download_location, simulated=False):
+    def set_variables(self, title: str, link: str, file_type: str, 
+                     file_format: str, download_location: str, 
+                     simulated: bool = False) -> None:
         """
-        Set the variables necessary for download. This will trigger the download
+        Configure download parameters and initialize download process.
 
-        :param title: title of the file
-        :param link: download link
-        :param file_type: Audio/Video/Zip
-        :param file_format: file extension
-        :param download_location: download path
-        :param simulated  : For development testing of widgets behavior
-        :return:
+        Args:
+            title: File title/name
+            link: Download URL
+            file_type: Type of file (Audio/Video/Zip)
+            file_format: File extension
+            download_location: Directory to save the file
+            simulated: Enable simulation mode for testing
         """
+        self._reset_state()
+        
         self.url = link
         self.title = title
         self.file_type = file_type.capitalize()
-        self.file_format = file_format
-        self.bytes_downloaded = 0
-        self.download_file_path = str(pathlib.Path(os.path.join(download_location, f"{sanitize_filename(title).strip()}.{file_format.lower()}.fdl")).resolve())
+        self.file_format = file_format.lower()
         self.in_simulation = simulated
-        if not simulated:
-            self.file_size = get_web_file_size(link, "bytes")
-            if self.file_size == 0:
-                Clock.schedule_once(lambda c: set_variable(self, "size_indeterminable", True, c), self.delay)  # To use the progressbar loop
+        
+        self._setup_file_path(download_location)
+        self._determine_file_size()
+        self._trigger_download_start()
 
-        # trigger download
-        Clock.schedule_once(lambda c: set_variable(self, "variables_set", True, c), self.delay)
+    def _reset_state(self):
+        """Reset the download state for a new download."""
+        self.bytes_downloaded = 0
+        self.progress_value = 0
+        self.download_failed = False
+        self.finished_download = False
+        self.cancelled = False
+        self.paused = False
+        self.error = ""
+        self.status = ""
 
-    def start_download_thread(self, resume=False, mode="wb"):
+    def _setup_file_path(self, download_location: str):
+        """Set up the complete file path for download."""
+        sanitized_title = sanitize_filename(self.title).strip()
+        filename = f"{sanitized_title}.{self.file_format}.fdl"
+        
+        download_path = pathlib.Path(download_location)
+        download_path.mkdir(parents=True, exist_ok=True)
+        
+        self.download_file_path = str((download_path / filename).resolve())
+
+    def _determine_file_size(self):
+        """Determine the remote file size if not in simulation mode."""
+        if not self.in_simulation and self.url:
+            self.file_size = get_remote_file_size(self.url, "bytes")
+            if not self.file_size:
+                self._schedule_ui_update("size_indeterminable", True)
+
+    def _trigger_download_start(self):
+        """Schedule the download start on the UI thread."""
+        self._schedule_ui_update("variables_set", True)
+
+    def start_download_thread(self, resume: bool = False, mode: str = "wb") -> None:
         """
-        Start downloading in a thread
+        Start download in a background thread.
 
-        :param resume: In resume or a fresh download
-        :param mode: File writing mode
+        Args:
+            resume: Whether to resume a previous download
+            mode: File write mode ('wb' for new, 'ab' for resume)
         """
-        function = self.download
         self.waiting_for_download = False
-        if self.in_simulation:
-            function = self.simulate_download
-        self.download_thread = CustomThread(target=function, args=(resume, mode))
-        self.download_thread.daemon = True
+        
+        target_func = self.simulate_download if self.in_simulation else self.download
+        self.download_thread = CustomThread(
+            target=target_func, 
+            args=(resume, mode),
+            daemon=True
+        )
         self.download_thread.start()
 
-    def stop_download_thread(self):
-        """
-        Stop download thread
-        :return:
-        """
-        if self.download_thread:
-            if not self.download_thread.stopped():
-                self.download_thread.stop()
-                self.download_thread.join()
+    def stop_download_thread(self) -> None:
+        """Safely stop the download thread."""
+        if self.download_thread and self.download_thread.is_alive():
+            self.download_thread.stop()
+            self.download_thread.join(timeout=2.0)
 
-    async def start_download_async(self, resume=False, mode="wb"):
+    async def start_download_async(self, resume: bool = False, mode: str = "wb") -> None:
         """
-        Start downloading using async
-        """
-        async def start_task():
-            task = asyncio.create_task(self.download_async(resume, mode))
-            return task
-        self._task = await start_task()
+        Start asynchronous download.
 
-    def stop_download_async(self):
+        Args:
+            resume: Whether to resume a previous download
+            mode: File write mode
         """
-        Stod download in async mode
-        """
+        if self._task and not self._task.done():
+            self._task.cancel()
+
+        self._task = asyncio.create_task(self.download_async(resume, mode))
+
+    def stop_download_async(self) -> None:
+        """Cancel asynchronous download and clean up."""
         if self._task:
             self._task.cancel()
+            self._task = None
+        
+        if self._session:
+            asyncio.create_task(self._session.close())
+            self._session = None
+            
         self.clean_files()
 
-    def download(self, resumed=False, mode="wb"):
+    def download(self, resumed: bool = False, mode: str = "wb") -> None:
         """
-        Download the file
+        Perform synchronous file download.
 
-        :param resumed: whether this is a resumed download
-        :param mode: file write mode
+        Args:
+            resumed: Whether this is a resumed download
+            mode: File write mode
         """
-        downloaded = self.bytes_downloaded if resumed else 0.000001
-        headers = {}
-
-        if resumed:
-            headers = {'Range': f'bytes={self.bytes_downloaded}-'}  # Correct header name and format
-            downloaded = self.bytes_downloaded
-
-        # Update initial status
-        Clock.schedule_once(
-            lambda c: self.set_status(
-                f"{round(downloaded / (1024 * 1024), 2)}Mb/{round(self.file_size / (1024 * 1024), 2)}Mb", c),
-            0
-        )
-
         try:
-            # Ensure directory exists
-            download_dir = os.path.dirname(self.download_file_path)
-            if download_dir and not os.path.exists(download_dir):
-                os.makedirs(download_dir, exist_ok=True)
+            headers = self._build_headers(resumed)
+            downloaded = self.bytes_downloaded if resumed else 0
+            
+            self._ensure_download_directory()
+            self._update_initial_status(downloaded)
 
-            path = pathlib.Path(self.download_file_path)
-            # Use context manager for both request and file handling
-            with requests.get(self.url, stream=True, headers=headers, timeout=30) as response:
-                response.raise_for_status()  # This will raise an exception for 4xx/5xx responses
+            with requests.get(self.url, stream=True, headers=headers, 
+                            timeout=self.DOWNLOAD_TIMEOUT) as response:
+                response.raise_for_status()
+                self._process_download_stream(response, downloaded, mode)
 
-                with path.open(mode) as out_file:
-                    for chunk in response.iter_content(chunk_size=2048):
-                        if self.paused:
-                            break
-
-                        if self.cancelled:
-                            self.clean_files()
-                            break
-
-                        #if chunk:  # Filter out keep-alive chunks
-                        out_file.write(chunk)
-                        #out_file.flush()  # Force write to disk
-                        downloaded += len(chunk)
-
-                        try:
-                            progress_value = round(downloaded / self.file_size * 100, 0)
-                            Clock.schedule_once(lambda c: self.set_progress(progress_value, c), self.delay)
-                            Clock.schedule_once(lambda c: self.set_status(
-                                f"{round(downloaded / (1024 * 1024), 2)}Mb/{round(self.file_size / (1024 * 1024), 2)}Mb",
-                                c),
-                                                self.delay
-                                                )
-                        except ZeroDivisionError:
-                            Clock.schedule_once(lambda c: self.set_progress(1, c), self.delay)
-
-            # Verify the download completed successfully
-            if not self.paused and not self.cancelled:
-                # Check if file actually exists and has content
-                if wait_for_file(path):
-                    self.rename_on_complete()
-                    Clock.schedule_once(lambda c: set_variable(self, "finished_download", True, c), self.delay)
-                else:
-                    error = "Download completed but file is empty or missing"
-                    Clock.schedule_once(lambda c: set_variable(self, "download_failed", True, c), self.delay)
-                    Clock.schedule_once(lambda c: set_variable(self, "error", error, c), self.delay)
-
-        except requests.exceptions.RequestException as e:
-            error = f"Network error: {str(e)}"
-            Clock.schedule_once(lambda c: set_variable(self, "download_failed", True, c), self.delay)
-            Clock.schedule_once(lambda c: set_variable(self, "error", error, c), self.delay)
-        except IOError as e:
-            error = f"File I/O error: {str(e)}"
-            Clock.schedule_once(lambda c: set_variable(self, "download_failed", True, c), self.delay)
-            Clock.schedule_once(lambda c: set_variable(self, "error", error, c), self.delay)
         except Exception as e:
-            error = f"Unexpected error: {str(e)}"
-            Clock.schedule_once(lambda c: set_variable(self, "download_failed", True, c), self.delay)
-            Clock.schedule_once(lambda c: set_variable(self, "error", error, c), self.delay)
+            self._handle_download_error(e)
 
-    async def download_async(self, resumed=False, mode="wb"):
+    def _build_headers(self, resumed: bool) -> Dict[str, str]:
+        """Build HTTP headers for the request."""
+        if resumed and self.bytes_downloaded > 0:
+            return {'Range': f'bytes={self.bytes_downloaded}-'}
+        return {}
+
+    def _ensure_download_directory(self):
+        """Ensure the download directory exists."""
+        download_dir = pathlib.Path(self.download_file_path).parent
+        download_dir.mkdir(parents=True, exist_ok=True)
+
+    def _update_initial_status(self, downloaded: int):
+        """Update the initial download status."""
+        if self.file_size:
+            status = f"{self._format_size(downloaded)}/{self._format_size(self.file_size)}"
+            self._set_status(status)
+
+    def _process_download_stream(self, response: requests.Response, 
+                               downloaded: int, mode: str):
+        """Process the download stream and write to file."""
+        path = pathlib.Path(self.download_file_path)
+        
+        with path.open(mode) as file:
+            for chunk in response.iter_content(chunk_size=self.CHUNK_SIZE):
+                if self._should_stop_download():
+                    break
+                    
+                file.write(chunk)
+                downloaded += len(chunk)
+                self._update_progress(downloaded)
+
+        if not self._should_stop_download():
+            self._finalize_download(path)
+
+    def _should_stop_download(self) -> bool:
+        """Check if download should be stopped."""
+        return self.paused or self.cancelled
+
+    def _update_progress(self, downloaded: int):
+        """Update download progress and status."""
+        self.bytes_downloaded = downloaded
+        
+        if self.file_size and self.file_size > 0:
+            progress = min(100, (downloaded / self.file_size) * 100)
+            self._set_progress(progress)
+            
+            status = f"{self._format_size(downloaded)}/{self._format_size(self.file_size)}"
+            self._set_status(status)
+        else:
+            self._set_progress(1)  # Indeterminate progress
+
+    def _finalize_download(self, path: pathlib.Path):
+        """Finalize download after completion."""
+        if self._wait_for_file(path):
+            self.rename_on_complete()
+            self._set_finished_download(True)
+        else:
+            self._set_download_failed("Download completed but file is empty or missing")
+
+    async def download_async(self, resumed: bool = False, mode: str = "wb") -> None:
         """
-        Download asynchronously
+        Perform asynchronous file download.
 
+        Args:
+            resumed: Whether this is a resumed download
+            mode: File write mode
         """
-        downloaded = 0.000001  # avoid ZeroDivisionError if size is not determined
-        headers = {}
-        if resumed:
-            headers = {'bytes-range': self.bytes_downloaded}
-            # recalculate progress
-            downloaded = self.bytes_downloaded
-
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(self.url, headers=headers) as res:
-                    if res.status != 200:
-                        self.status = "Failed with code: " + str(res.status)
-                        self.error = self.status
-                        self.download_failed = True
+            headers = self._build_headers(resumed)
+            downloaded = self.bytes_downloaded if resumed else 0
+
+            async with aiohttp.ClientSession() as self._session:
+                async with self._session.get(self.url, headers=headers) as response:
+                    if response.status != 200 and response.status != 206:
+                        self._set_download_failed(f"HTTP Error: {response.status}")
                         return
-                    async with aiofiles.open(self.download_file_path, mode=mode) as out_file:
-                        async for chunk in res.content.iter_chunked(10240):
+
+                    async with aiofiles.open(self.download_file_path, mode=mode) as file:
+                        async for chunk in response.content.iter_chunked(self.CHUNK_SIZE):
                             if self.cancelled:
-                                self.status = "Cancelled"
-                                self.download_failed = True
+                                self._set_download_failed("Download cancelled")
                                 return
                             if self.paused:
-                                self.status = "Paused"
+                                self._set_status("Paused")
                                 return
-                            await out_file.write(chunk)
+                                
+                            await file.write(chunk)
                             downloaded += len(chunk)
-                            self.progress_value = downloaded / self.file_size * 100 if self.file_size else 0
-                            self.status = f"{round(downloaded/(1024*10240), 2)}Mb/{round(self.file_size/(1024*1024), 2)}Mb"
-            self.finished_download = True
+                            self._update_progress_async(downloaded)
+
+            self._set_finished_download(True)
+
+        except asyncio.CancelledError:
+            self._set_status("Download cancelled")
         except Exception as e:
-            error = f"Download error: {e}"
-            self.error = error
-            self.download_failed = True
+            self._set_download_failed(f"Download error: {e}")
 
-    def pause_download(self):
-        Clock.schedule_once(lambda c: set_variable(self, "paused", True, c), .001)
+    def _update_progress_async(self, downloaded: int):
+        """Update progress for async downloads."""
+        self.bytes_downloaded = downloaded
+        
+        if self.file_size and self.file_size > 0:
+            progress = min(100, int(downloaded / self.file_size) * 100)
+            self.progress_value = progress
+            
+            status = f"{self._format_size(downloaded)}/{self._format_size(self.file_size)}"
+            self.status = status
 
-    def cancel_download(self):
-        Clock.schedule_once(lambda c: set_variable(self, "cancelled", True, c), .001)
+    @staticmethod
+    def _format_size(bytes_size: int) -> str:
+        """Format file size in human-readable format."""
+        if bytes_size == 0:
+            return "0 B"
+            
+        units = ['B', 'KB', 'MB', 'GB']
+        unit_index = 0
+        
+        while bytes_size >= 1024 and unit_index < len(units) - 1:
+            bytes_size /= 1024.0
+            unit_index += 1
+            
+        return f"{bytes_size:.2f} {units[unit_index]}"
 
-    def resume_download(self):
-        Clock.schedule_once(lambda c: set_variable(self, "paused", False, c), .001)
-
-    def set_progress(self, value, dt=None):
-        self.progress_value = value
-        #print("\r Set progress: {}".format(value), end="", flush=True)
-
-    def set_status(self, status, _):
+    @staticmethod
+    def _wait_for_file(path: pathlib.Path, timeout: float = None, 
+                      interval: float = None) -> bool:
         """
-        :param status:
-        :param _:
-        :return:
+        Wait for file to appear on disk with content.
+
+        Args:
+            path: File path to check
+            timeout: Maximum time to wait
+            interval: Check interval
+
+        Returns:
+            True if file exists with content, False otherwise
         """
-        self.status = status
+        timeout = timeout or DownloadModel.FILE_WAIT_TIMEOUT
+        interval = interval or DownloadModel.FILE_WAIT_INTERVAL
+        
+        start = time.time()
+        while time.time() - start < timeout:
+            if path.exists() and path.stat().st_size > 0:
+                return True
+            time.sleep(interval)
+        return False
 
-    def retry_download(self):
-        path = os.path.split(self.download_file_path)
-        if path[1] in os.listdir(path[0]):
-            mode = "ab"
-        else:
-            mode = "wb"
+    # UI Control Methods
+    def pause_download(self) -> None:
+        """Pause the current download."""
+        self._schedule_ui_update("paused", True)
 
+    def cancel_download(self) -> None:
+        """Cancel the current download."""
+        self._schedule_ui_update("cancelled", True)
+
+    def resume_download(self) -> None:
+        """Resume a paused download."""
+        self._schedule_ui_update("paused", False)
+
+    def retry_download(self) -> None:
+        """Retry the failed download."""
+        mode = "ab" if pathlib.Path(self.download_file_path).exists() else "wb"
         self.start_download_thread(mode=mode)
 
-    def clean_files(self):
-        """
-        Remove file residues
-        """
+    @mainthread
+    def _set_progress(self, value: float) -> None:
+        """Set progress value on main thread."""
+        self.progress_value = value
+
+    @mainthread
+    def _set_status(self, status: str) -> None:
+        """Set status text on main thread."""
+        self.status = status
+
+    @mainthread
+    def _set_finished_download(self, value: bool) -> None:
+        """Set finished_download property on main thread."""
+        self.finished_download = value
+
+    @mainthread
+    def _set_download_failed(self, error_message: str) -> None:
+        """Set download failed state on main thread."""
+        self.download_failed = True
+        self.error = error_message
+
+    def _schedule_ui_update(self, property_name: str, value: Any) -> None:
+        """Schedule a UI property update on the main thread."""
+        Clock.schedule_once(lambda dt: setattr(self, property_name, value), self.MIN_DELAY)
+
+    def _handle_download_error(self, error: Exception) -> None:
+        """Handle download errors consistently."""
+        error_mapping = {
+            requests.exceptions.RequestException: f"Network error: {error}",
+            IOError: f"File I/O error: {error}",
+            OSError: f"System error: {error}"
+        }
+        
+        error_message = error_mapping.get(type(error), f"Unexpected error: {error}")
+        self._set_download_failed(error_message)
+
+    def clean_files(self) -> None:
+        """Remove incomplete download files."""
         try:
-            os.remove(self.download_file_path)
+            path = pathlib.Path(self.download_file_path)
+            if path.exists():
+                path.unlink()
+                logger.info(f"Cleaned download file: {self.download_file_path}")
         except Exception as e:
-            logger.warning(f"[DownloadModel] Could not clean file {self.download_file_path} Error, {e}")
+            logger.warning(f"Could not clean file {self.download_file_path}: {e}")
 
-    def rename_on_complete(self, new_extension=None, add_timestamp=False):
+    def rename_on_complete(self, new_extension: Optional[str] = None, 
+                          add_timestamp: bool = False) -> bool:
         """
-        Rename the file on complete
+        Rename downloaded file to its final name.
 
-        :param new_extension: Custom extension to use (e.g., ".mp4", ".mp3")
-        :param add_timestamp: Whether to add timestamp to avoid conflicts
-        :return: True if successful, False otherwise
+        Args:
+            new_extension: Custom file extension
+            add_timestamp: Add timestamp to avoid conflicts
+
+        Returns:
+            True if rename successful, False otherwise
         """
         try:
-            download_path = pathlib.Path(self.download_file_path)
-
-            # Determine new filename
+            current_path = pathlib.Path(self.download_file_path)
+            
+            # Determine new path
             if new_extension:
-                # Use custom extension
-                new_path = download_path.with_suffix(new_extension)
+                new_path = current_path.with_suffix(new_extension)
             else:
-                # Remove extension (or use your specific logic)
-                new_path = download_path.with_suffix('')
+                new_path = current_path.with_suffix('')  # Remove .fdl extension
 
-            # Handle filename conflicts
+            # Handle file conflicts
             if new_path.exists():
                 if add_timestamp:
-                    # Add timestamp to make filename unique
                     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                     new_path = new_path.parent / f"{new_path.stem}_{timestamp}{new_path.suffix}"
                 else:
-                    logger.warning(f"[Rename] Target file exists, not overwriting `{new_path}`")
+                    logger.warning(f"File already exists: {new_path}")
                     return False
 
-            # Perform the rename operation
-            download_path.rename(new_path)
-
-            # Verify rename operation
-            if new_path.exists() and not download_path.exists():
-                self.download_file_path = str(new_path)
-                logger.info(f"[Rename] Successfully renamed to `{self.download_file_path}`")
-            else:
-                logger.error(f"[Rename] Rename operation failed verification")
+            # Perform rename
+            current_path.rename(new_path)
+            self.download_file_path = str(new_path)
+            
+            logger.info(f"Successfully renamed to: {self.download_file_path}")
+            return True
 
         except Exception as e:
-            logger.error(f"[Rename] Error `{e}`")
+            logger.error(f"Failed to rename file: {e}")
+            return False
 
-    def show_file(self):
-        """
-        Show the file in folder
-        :return:
-        """
-        try:
-            if platform == "win":
-                subprocess.run(['explorer', '/select,', self.download_file_path])
-        except:
-            pass
+    def show_file(self) -> None:
+        """Open file location in system file manager."""
+        if platform == "win" and self.download_file_path:
+            try:
+                path = pathlib.Path(self.download_file_path)
+                if path.exists():
+                    subprocess.run(['explorer', '/select,', str(path)], check=False)
+            except Exception as e:
+                logger.warning(f"Could not show file: {e}")
 
+    def simulate_download(self, *args) -> None:
+        """Simulate download for testing UI components."""
+        total_steps = 100
+        for progress in range(1, total_steps + 1):
+            if self.cancelled:
+                break
+                
+            self._set_progress(progress)
+            time.sleep(0.01)  # 10ms delay between updates
 
-    def simulate_download(self, *args):
-        total = 101
-        limit = 100
-        for n in range(1, total):
-            Clock.schedule_once(lambda c: set_variable(self, "progress_value",
-                                                       n, c), 2 / 1000)
-            if n == limit:
-                Clock.schedule_once(lambda c: set_variable(self, "finished_download",
-                                                           True, c), 2 / 1000)
-            time.sleep(10/1000)  # milliseconds
-
+        if not self.cancelled:
+            self._set_finished_download(True)

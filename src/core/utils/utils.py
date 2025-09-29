@@ -3,310 +3,241 @@ import os
 import re
 import json
 import logging
+from urllib.parse import urlparse, unquote
+from typing import (
+    Union, Optional, List, 
+    Dict, Any
+)
+from pathlib import Path
+
 import requests
 from PIL import Image
-from src.core import config
 from json import JSONDecodeError
-from urllib.parse import urlparse, unquote
-from src.core.base import get_app_home_directory
 
+from src.core import config
+from src.core.base import get_app_home_directory
 
 logger = logging.getLogger(__name__)
 
 
-def strip_cdn_url(cdn_url):
+def strip_cdn_url(cdn_url: str) -> str:
     """
-    Strips known CDN wrappers (e.g., WordPress i0.wp.com) and returns the original image URL.
+    Extract original URL from CDN wrappers like WordPress i0.wp.com.
+    Returns original URL if no CDN pattern matches.
     """
     parsed = urlparse(cdn_url)
 
-    # Handle WordPress CDN proxy
-    if parsed.netloc.endswith("wp.com") and parsed.path.startswith("/"):
-        # Example: https://i0.wp.com/justnaija.com/uploads/2025/09/image.jpg
-        stripped = unquote(parsed.path.lstrip("/"))
-        if stripped.startswith("http://") or stripped.startswith("https://"):
-            return stripped
-        else:
-            return f"https://{stripped}"
+    # Handle WordPress CDN
+    if parsed.netloc.endswith("wp.com"):
+        original_path = unquote(parsed.path.lstrip("/"))
+        if original_path.startswith(("http://", "https://")):
+            return original_path
+        return f"https://{original_path}"
 
-    # Add more CDN patterns here if needed
-    return cdn_url  # Return original if no match
+    return cdn_url
 
 
-
-def format_string(word):
+def clean_filename(text: str) -> str:
     """
-    Replace special characters.
-    Its vital for file naming
+    Remove problematic characters for file naming.
+    Replaces special chars and multiple spaces with single characters.
     """
-    pattern = r'\W'
-    new_string = re.sub(pattern, " ", word)
-    return re.sub(" +", "", new_string)
+    # Remove special characters and normalize spaces
+    cleaned = re.sub(r'\W+', '', text)
+    return cleaned
 
 
-def sanitize_filename(filename):
+def get_remote_file_size(url: str, unit: str = "MB") -> float:
     """
-    Replace problematic characters (/|\\$&) with empty spaces in a filename
-
-    :param filename: Input filename or path
-    :return: Sanitized filename with problematic characters replaced by spaces
+    Get size of remote file in specified unit.
+    Returns 0.0 if request fails.
     """
-    # Define the characters to replace
-    chars_to_replace = ['/', '|', '\\', '$', '&']
+    unit = unit.lower()
+    size_conversions = {
+        "bytes": 1,
+        "kb": 1024,
+        "mb": 1024 * 1024,
+        "gb": 1024 * 1024 * 1024
+    }
 
-    # Replace each character with a space
-    for char in chars_to_replace:
-        filename = filename.replace(char, ' ')
-
-    return re.sub(' +', '', filename)
-
-
-def get_web_file_size(link:str="", format_:str="MB") -> int|float:
-    """
-    Determine the remote file size
-
-    :param link: The target link to get size from
-    :param format_: The size formating. Supported are: bytes, mb, gb
-
-    :rtype: int|float
-    :return:
-        A file size value greater than 0 if the file size is determined
-        0 is returned if any exception arises while getting the remote file size
-    """
-    format_ = format_.lower()
     try:
-        res = requests.head(link)
-        size = int(res.headers["Content-Length"])
-        match format_:
-            case "bytes":
-                return size
-            case "mb":
-                return size / (1024 * 1024)
-            case "gb":
-                return size / (1024 * 1024 * 1024)
-            case _:
-                return size
-    except:
-        return 0
+        response = requests.head(url, timeout=10)
+        content_length = int(response.headers.get("Content-Length", 0))
+        
+        divisor = size_conversions.get(unit, 1)
+        return content_length / divisor
+    except Exception as e:
+        logger.warning(f"Failed to get file size for {url}: {e}")
+        return 0.0
 
-def is_valid_youtube_link(link):
-    """
-    Check if link is valid
 
-    :param link: YouTube video link
-    :rtype: bool
-    :return:
-        Returns True if the link is a valid YouTube video link or False is returned
+def is_valid_youtube_url(url: str) -> bool:
     """
-    pattern = r"(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?feature=youtu.be\/)|(youtu\.be\/))([\w-]{11})"
-    match = re.search(pattern, link)
-    if match:
+    Check if URL is a valid YouTube video link.
+    Supports various YouTube URL formats.
+    """
+    youtube_patterns = [
+        r"https?://(?:www\.)?youtube\.com/watch\?v=[\w-]{11}",
+        r"https?://youtu\.be/[\w-]{11}",
+        r"https?://(?:www\.)?youtube\.com/embed/[\w-]{11}",
+    ]
+    
+    return any(re.match(pattern, url) for pattern in youtube_patterns)
+
+
+def has_internet_connection(timeout: int = 5) -> bool:
+    """
+    Check internet connectivity by attempting to reach Google.
+    Returns True if connected, False otherwise.
+    """
+    try:
+        requests.get("https://www.google.com", timeout=timeout)
         return True
-    else:
+    except requests.RequestException:
         return False
 
 
-# select the quality from list of streams from a pytubefix.YouTube.streams
-def select_stream_quality(streams, standard="128kbps", mode="audio"):
+def merge_dicts(primary: dict, secondary: dict) -> dict:
     """
-    Select a stream from the specified quality from the streams
-
-    :param streams: list of streams
-    :param standard: default 126kbps in audio maximum is 326kbps, default for video 720p but depends on the stream can be upto 2k
-    :param mode: audio/video
-    :rtype: pytubefix.stream.Stream
-    :return:
-        A pytubefix.stream.Stream class
+    Merge secondary dict into primary dict.
+    Returns the merged dictionary.
     """
+    primary.update(secondary)
+    return primary
 
-    if mode == "audio":
-        stream_quality = [stream.abr for stream in streams if "audio" in stream.type]
-        stream_quality_int = [stream.split("kbps")[0] for stream in stream_quality]
+
+def get_resource_path(relative_path: str = "") -> str:
+    """
+    Get absolute path for resources in both development and bundled environments.
+    """
+    if getattr(sys, 'frozen', False):
+        # Running in PyInstaller bundle
+        base_path = getattr(sys, '_MEIPASS', os.path.dirname(sys.executable))
     else:
-        stream_quality = [stream.resolution for stream in streams if "video" in stream.type]
-        stream_quality_int = [stream.split("p")[0] for stream in stream_quality]
+        # Running in normal Python environment
+        base_path = os.path.dirname(sys.argv[0])
 
-    if standard in stream_quality:
-        index = stream_quality.index(standard)
-        return streams[index]
-    else:
-        indices = {}  # store the original stream index
-        for i, val in enumerate(stream_quality):
-            indices[val] = i
+    return os.path.join(base_path, relative_path)
 
-        qualities_int_sorted = sorted(stream_quality_int)
-        # reconstruct the whole thing together
-        if mode == "audio":
-            return streams[indices[f"{qualities_int_sorted[-1]}kbps"]]
-        else:
-            stream = streams.filter(res=config.get("Download", "video_quality"), progressive=True).first()
-            if not stream:
-                # our desired quality is not in the available streams so we have to check for alternatives
-                qualities = ["480p", "540p", "720p"]
-                for quality in qualities:
-                    stream = streams.filter(res=quality, progressive=True).first()
-                    if stream:
-                        break
-                if not stream:
-                    # Our alternative have failed so the only option is to use the highest_resolution_method
-                    # although the quality is in question
-                    stream = streams.get_highest_resolution()
 
-            return stream
-
-def is_connected(max_retry=5):
+def update_object_attribute(obj: object, attribute: str, value: Any) -> bool:
     """
-    Check for internet connection
-
-    :param max_retry: Maximum timeout in seconds
-    :rtype: bool
-    :return:
-        True if device is connected to the internet or False
+    Safely update an object's attribute.
+    Returns True if successful, False otherwise.
     """
     try:
-        requests.get("https://google.com", timeout=max_retry)
-        logger.info("Connection: Connected")
+        setattr(obj, attribute, value)
         return True
-    except ConnectionError:
-        logger.info("Connection: No internet")
+    except AttributeError as e:
+        logger.warning(f"Cannot update attribute '{attribute}' in {obj.__class__.__name__} Error {e}")
+        return False
+    except Exception as e:
+        logger.warning(f"Unexpected error updating attribute Error, {e}")
         return False
 
 
-def merge_dict(d1: dict, d2: dict):
+def rgb_to_hex(color: Union[List[float], tuple]) -> str:
     """
-    Combine two dictionaries
-
-    :param d1: primary dictionary
-    :param d2: the dictionary to be added
-    :rtype: dict
-    :return:
-        An updated dictionary
-
+    Convert RGB/RGBA color values to hex format.
+    Supports both 3-component (RGB) and 4-component (RGBA) colors.
     """
-    d1.update(d2)
+    if len(color) not in (3, 4):
+        raise ValueError("Color must have 3 (RGB) or 4 (RGBA) components")
 
-    return d2
-
-
-def resource_path(path=os.path.abspath("")):
-    """
-    Useful for handling paths in both development and production
-    :param path: The resource file path
-    :rtype: str
-    :return:
-        A valid path for both in the executable or when in development
-    """
-    try:
-        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
-            b = sys._MEIPASS
-        elif getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS:'):
-            b = sys._MEIPASS
-        else:
-            script_path = os.path.realpath(os.path.dirname(sys.argv[0]))
-            b = script_path
-
-    except:
-        b = os.path.abspath("")
-
-    path = os.path.join(b, path)
-    return path
-
-
-# Update variables for classes
-def set_variable(class_, variable, data, delta=None):
-    """
-    A function to update variables of class. First checks if the variable is valid and then updates it or logs an error
-    if invalid
-
-    :param class_: object
-    :param variable: variable name
-    :param data: the variable new content
-    :param delta: If using kivy.clock.Clock otherwise leave to None
-    :return:
-    """
-    valid = False
-    try:
-        getattr(class_, variable)
-        valid = True
-    except AttributeError as attr_err:
-        logger.warning(f"Variable Update: Error updating variable '{variable}' in '{class_.__class__.__name__}',"
-                       f"Error string {attr_err}")
-    except Exception as err:
-        logger.warning(f"Variable Update: Error updating variable '{variable}' in '{class_.__class__.__name__}'"
-                       f"Error: {err}")
-
-    if valid:
-        setattr(class_, variable, data)
-
-
-# color conversion
-def rgb_to_hex(color: list | tuple):
-    """
-    Convert rgb/rgba color format to hex format
-
-    :param color: A list or tuple containing the color format in kivy rgb/rgba color format e.g [.1, .2, .5] or [.1, .2, .5, 1]
-    :rtype: str
-    :return:
-        A hex color
-    """
-    if len(color) == 3:
-        # no alpha
-        # convert from kivymd rgb to standard values
-        r,g,b = [int(v * 255) for v in color]
+    # Convert from 0-1 range to 0-255 range
+    components = [int(component * 255) for component in color]
+    
+    if len(components) == 3:
+        r, g, b = components
         return f"#{r:02X}{g:02X}{b:02X}"
     else:
-        # has alpha channel
-        assert len(color) == 4
-        r,g,b,a = [int(v * 255) for v in color]
+        r, g, b, a = components
         return f"#{a:02X}{r:02X}{g:02X}{b:02X}"
 
 
-def convert_png_to_ico(image_path, save_path, sizes=None):
-    try:
-        image = Image.open(image_path)
-        if sizes is None:
-            sizes = [(256, 256), (512, 512)]
-
-        image.save(save_path, format="ICO", sizes=sizes)
-    except Exception as e:
-        print("Error converting image to Ico")
-
-
-def resize_image(image_path, save_path, size=None):
-    try:
-        image = Image.open(image_path)
-        if size is None:
-            size = (64, 64)
-
-        image = image.resize(size=size, resample=Image.Resampling.LANCZOS)
-        image.save(save_path, format="PNG")
-    except Exception as e:
-        print("Error resizing image")
-
-
-# save download
-def save_download_data(data:dict):
+def convert_to_ico(png_path: str, ico_path: str, sizes: List[tuple] = None) -> bool:
     """
-    Add the item to cache
+    Convert PNG image to ICO format.
+    Returns True if successful, False otherwise.
     """
-    cache = list(load_download_data())
-    cache.append(data)
-    with open(os.path.join(get_app_home_directory(), "downloads.json"), "w") as f:
-        json.dump(cache, f, indent=4)
+    if sizes is None:
+        sizes = [(16, 16), (32, 32), (48, 48), (64, 64), (256, 256)]
 
-# load downloads
-def load_download_data():
-    filename = "downloads.json"
-    path = os.path.join(get_app_home_directory(), filename)
-    if not os.path.exists(path):
-        with open(path, "w") as f:
-            json.dump([], f, indent=4)
     try:
-        with open(path, "r") as f:
+        with Image.open(png_path) as img:
+            img.save(ico_path, format="ICO", sizes=sizes)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to convert {png_path} to ICO: {e}")
+        return False
+
+
+def resize_image(image_path: str, output_path: str, size: tuple = (64, 64)) -> bool:
+    """
+    Resize image to specified dimensions.
+    Returns True if successful, False otherwise.
+    """
+    try:
+        with Image.open(image_path) as img:
+            resized = img.resize(size, Image.Resampling.LANCZOS)
+            resized.save(output_path, format="PNG")
+        return True
+    except Exception as e:
+        logger.error(f"Failed to resize {image_path}: {e}")
+        return False
+
+
+def save_download_record(download_data: dict) -> None:
+    """
+    Save download record to persistent storage.
+    Appends to existing download history.
+    """
+    downloads_file = Path(get_app_home_directory()) / "downloads.json"
+    
+    try:
+        # Load existing data
+        existing_data = load_download_records()
+        existing_data.append(download_data)
+        
+        # Save updated data
+        with open(downloads_file, 'w') as f:
+            json.dump(existing_data, f, indent=2)
+            
+    except Exception as e:
+        logger.error(f"Failed to save download record: {e}")
+
+
+def load_download_records() -> List[dict]:
+    """
+    Load download history from persistent storage.
+    Returns empty list if file doesn't exist or is corrupted.
+    """
+    downloads_file = Path(get_app_home_directory()) / "downloads.json"
+    
+    if not downloads_file.exists():
+        # Create empty file
+        downloads_file.parent.mkdir(parents=True, exist_ok=True)
+        with open(downloads_file, 'w') as f:
+            json.dump([], f)
+        return []
+
+    try:
+        with open(downloads_file, 'r') as f:
             return json.load(f)
-    except JSONDecodeError:
-        with open(path, "w") as f:
-            json.dump([], f, indent=4)
+    except (JSONDecodeError, Exception) as e:
+        logger.warning(f"Corrupted downloads file, resetting: {e}")
+        # Reset corrupted file
+        with open(downloads_file, 'w') as f:
+            json.dump([], f)
         return []
-    except Exception as e:
-        return []
+
+
+# Backward compatibility aliases after refactor
+sanitize_filename = clean_filename
+is_connected = has_internet_connection
+is_valid_youtube_link = is_valid_youtube_url
+merge_dict = merge_dicts
+set_variable = update_object_attribute
+convert_png_to_ico = convert_to_ico
+save_download_data = save_download_record
+load_download_data = load_download_records
