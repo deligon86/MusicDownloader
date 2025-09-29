@@ -7,7 +7,8 @@ Much of the code needs optimizations and rewrite to follow the design principles
 
 ## Supported source sites
 Currently supported data sources are:
+* Americatop40
+* Billboard Chart
 * Hiphopkit
-* JustNaija
-* Billboard chart
+* Justnaija
 * YouTube

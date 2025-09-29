@@ -1,3 +1,5 @@
+# Building script usage
+## NOTE: You can also use the builder.py in the project root in place of app_builder/buid.py in building the app
 ## Initial Setup and Environment
 These commands are used to prepare your local development environment before running the build script.
 
